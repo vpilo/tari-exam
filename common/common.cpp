@@ -12,13 +12,13 @@
 
 #include <cstdio>
 #include <cstdarg>
-#include <ctime>
 #include <string.h>
 
 
 FILE* Common::logFileHandle_ = 0;
 char  Common::logFilePath_[] = "";
 bool  Common::useLogFile_( false );
+timeval Common::startTime_ = { 0L, 0L };
 
 
 
@@ -67,19 +67,29 @@ void Common::setLogFile( const char* logFilePath )
 
 void Common::writeLine( const char* prefix, const char* string )
 {
-  double elapsed = std::clock() / (double)CLOCKS_PER_SEC;
+  // Calculate the time since program start
+  if( ! startTime_.tv_sec &&  ! startTime_.tv_usec )
+  {
+    gettimeofday( &startTime_, NULL );
+  }
+  timeval end;
+  gettimeofday( &end, NULL );
+
+  double elapsed =   ( end.tv_sec  - startTime_.tv_sec  )
+                   + ( end.tv_usec - startTime_.tv_usec ) / 1000000.f;
+
+  // Compose the debug line, adding the elapsed time (very useful when multithreading)
   char line[ MAX_STRING_LENGTH ];
+  sprintf( line, "\r%7.3f> %s%s\n", elapsed, prefix, string );
 
-  sprintf( line, "%6.4f> %s%s\n", elapsed, prefix, string );
-
-  // Write it to standard output
+  // Write it to standard output..
   if( ! useLogFile_ )
   {
     printf( line );
     return;
   }
 
-  // Write it to file
+  // ..or to file
 
   // Open the file
   if( logFileHandle_ == 0 )

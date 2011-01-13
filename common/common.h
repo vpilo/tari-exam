@@ -12,7 +12,7 @@
 #define COMMON_H
 
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 
 
 /**
@@ -68,6 +68,7 @@ private:
   static FILE *logFileHandle_;
   static char logFilePath_[ MAX_STRING_LENGTH ];
   static bool useLogFile_;
+  static timeval startTime_;
 
 };
 
