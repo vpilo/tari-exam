@@ -15,16 +15,16 @@ DEBUG = -g
 INCLUDEDIRS= -I common -I client -I server
 
 # Common code source & header files
-GENERIC_SOURCES = common/*.cpp
-GENERIC_HEADERS = common/*.h
+GENERIC_SOURCES = common/common.cpp
+GENERIC_HEADERS = common/common.h common/errors.h
 
 # Server files
-SERVER_SOURCES = server/*.cpp
-SERVER_HEADERS = server/*.h
+SERVER_SOURCES = server/main.cpp server/server.cpp
+SERVER_HEADERS = server/server.h
 
 # Client files
-CLIENT_SOURCES = client/*.cpp
-CLIENT_HEADERS = client/*.h
+CLIENT_SOURCES = client/main.cpp client/client.cpp
+CLIENT_HEADERS = client/client.h
 
 # Libraries to include in the binaries
 LIBRARIES = -lncurses -lpthread
