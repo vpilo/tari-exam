@@ -14,6 +14,7 @@
 
 #include <semaphore.h>
 #include <signal.h>
+#include <unistd.h>
 
 
 // Semaphore used to quit
@@ -69,7 +70,14 @@ int main( int argc, char* argv[] )
   signal( SIGTERM, handleSignal ); // terminate signal
   signal( SIGQUIT, handleSignal ); // quit signal
 
-  server->initialize( "0.0.0.0", SERVER_PORT );
+  Errors::ErrorCode status = server->initialize( "0.0.0.0", SERVER_PORT );
+  if( status != Errors::Error_None )
+  {
+    Common::error( "Server could not be started: error %d", status );
+
+    delete server;
+    return status;
+  }
 
   // Wait for a quit signal to arrive
   sem_wait( &quitSignal );

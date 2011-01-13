@@ -18,6 +18,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <unistd.h>
+#include "connection.h"
 
 
 /**
@@ -66,6 +67,7 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
   myAddress.sin_port = htons( port );
   myAddress.sin_addr.s_addr = listenAddr.s_addr;
   memset( &( myAddress.sin_zero ), '\0', 8 );
+  Common::debug( "Will listen on %s:%d", address, port );
 
   // Listen on the specified address and port
   result = bind( listenSocket_, reinterpret_cast<sockaddr*>( &myAddress ), sizeof( sockaddr ) );
@@ -102,6 +104,8 @@ void* Server::waitConnections( void* thisPointer )
   socklen_t addressSize = sizeof( sockaddr_in );
   int newConnection;
 
+  Common::debug( "Server is now accepting connections" );
+
   while( true )
   {
     newConnection = accept( self->listenSocket_,
@@ -116,7 +120,9 @@ void* Server::waitConnections( void* thisPointer )
 
     Common::debug( "Incoming connection from %s:%d", remoteAddress, remote.sin_port );
 
-//     close( newConnection );
+    // The connection will take care of the socket and free it up when done.
+    // It will also self-destruct when not needed anymore.
+    Connection* connection = new Connection( newConnection );
   }
 }
 
