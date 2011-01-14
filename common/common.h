@@ -43,7 +43,7 @@ class Common
      * Acts like printf(), by taking all the parameters you want.
      *
      * @param debugString The string to display. See printf for details
-     * @see printf()
+     * @see std::printf()
      */
     static void debug( const char* debugString, ... );
 
@@ -53,9 +53,18 @@ class Common
      * Acts like printf(), by taking all the parameters you want.
      *
      * @param errorString The string to display. See printf for details
-     * @see printf()
+     * @see std::printf()
      */
     static void error( const char* errorString, ... );
+
+    /**
+     * Prints out an error message to the 'standard error' output, and abort.
+     *
+     * @param errorString The string to display. See printf for details
+     * @see std::printf()
+     * @see error()
+     */
+    static void fatal( const char* errorString, ... );
 
     static void setLogFile( const char* logFilePath );
 

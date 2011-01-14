@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <string.h>
+#include <stdlib.h>
 
 
 FILE* Common::logFileHandle_ = 0;
@@ -50,6 +51,23 @@ void Common::error( const char* errorString, ... )
   va_end( args );
 
   writeLine( "ERROR: ", outputString );
+}
+
+
+
+void Common::fatal( const char* errorString, ... )
+{
+  char outputString[ MAX_STRING_LENGTH ];
+  va_list args;
+
+  // Get all the parameters that have been passed to this function
+  va_start( args, errorString );
+  vsprintf( outputString, errorString, args );
+  va_end( args );
+
+  writeLine( "ERROR: ", outputString );
+
+  abort();
 }
 
 
