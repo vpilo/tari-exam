@@ -19,8 +19,8 @@ GENERIC_SOURCES = common/common.cpp
 GENERIC_HEADERS = common/common.h common/errors.h
 
 # Server files
-SERVER_SOURCES = server/server.cpp server/clientsession.cpp server/main.cpp
-SERVER_HEADERS = server/server.h   server/clientsession.h
+SERVER_SOURCES = server/server.cpp server/sessionclient.cpp server/main.cpp
+SERVER_HEADERS = server/server.h   server/sessionclient.h
 
 # Client files
 CLIENT_SOURCES = client/client.cpp client/main.cpp

@@ -10,7 +10,7 @@
 
 #include "server.h"
 
-#include "clientsession.h"
+#include "sessionclient.h"
 #include "common.h"
 #include "errors.h"
 

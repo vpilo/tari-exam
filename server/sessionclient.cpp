@@ -8,7 +8,7 @@
  * (at your option) any later version.
  */
 
-#include "clientsession.h"
+#include "sessionclient.h"
 
 #include "common.h"
 #include "server.h"
