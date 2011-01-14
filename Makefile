@@ -19,11 +19,11 @@ GENERIC_SOURCES = common/common.cpp
 GENERIC_HEADERS = common/common.h common/errors.h
 
 # Server files
-SERVER_SOURCES = server/main.cpp server/server.cpp
-SERVER_HEADERS = server/server.h
+SERVER_SOURCES = server/server.cpp server/clientsession.cpp server/main.cpp
+SERVER_HEADERS = server/server.h   server/clientsession.h
 
 # Client files
-CLIENT_SOURCES = client/main.cpp client/client.cpp
+CLIENT_SOURCES = client/client.cpp client/main.cpp
 CLIENT_HEADERS = client/client.h
 
 # Libraries to include in the binaries

@@ -8,23 +8,29 @@
  * (at your option) any later version.
  */
 
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#ifndef CLIENTSESSION_H
+#define CLIENTSESSION_H
+
+
+class Server;
 
 
 
-class Connection
+class ClientSession
 {
 
-public:
-    Connection( const int socket );
-    virtual ~Connection();
+  public:
+    ClientSession( Server* parent, const int socket );
+    virtual ~ClientSession();
 
-private:
+  private:
     int socket_;
+
+    /// Pointer to the parent server
+    Server* server_;
 
 };
 
 
 
-#endif // CONNECTION_H
+#endif // CLIENTSESSION_H

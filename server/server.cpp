@@ -10,6 +10,7 @@
 
 #include "server.h"
 
+#include "clientsession.h"
 #include "common.h"
 #include "errors.h"
 
@@ -18,7 +19,6 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <unistd.h>
-#include "connection.h"
 
 
 /**
@@ -33,6 +33,25 @@
 Server::Server()
 : listenThread_( 0 )
 {
+}
+
+
+
+Server::~Server()
+{
+  pthread_cancel( listenThread_ );
+}
+
+
+
+void Server::addSession( int newSocket )
+{
+  // The client session will take care of the socket and free it up when done.
+  // It will also self-destruct when not needed anymore.
+
+  ClientSession* session = new ClientSession( this, newSocket );
+
+  sessions_.push_back( session );
 }
 
 
@@ -89,10 +108,13 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
 
 
 
-Server::~Server()
+void Server::removeSession( ClientSession* session )
 {
-  pthread_cancel( listenThread_ );
+  sessions_.remove( session );
+
+  // We won't delete the ClientSession, it does so by itself
 }
+
 
 
 void* Server::waitConnections( void* thisPointer )
@@ -120,9 +142,7 @@ void* Server::waitConnections( void* thisPointer )
 
     Common::debug( "Incoming connection from %s:%d", remoteAddress, remote.sin_port );
 
-    // The connection will take care of the socket and free it up when done.
-    // It will also self-destruct when not needed anymore.
-    Connection* connection = new Connection( newConnection );
+    self->addSession( newConnection );
   }
 }
 

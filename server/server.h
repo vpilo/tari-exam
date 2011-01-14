@@ -14,7 +14,11 @@
 #include <netinet/in.h>
 #include <pthread.h>
 
+#include <list>
+
 #include "errors.h"
+
+class ClientSession;
 
 
 
@@ -26,6 +30,9 @@ public:
 
     Errors::ErrorCode initialize( const char* address, const int port );
 
+    void addSession( int newSocket );
+    void removeSession( ClientSession* session );
+
 private:
 
   static void* waitConnections( void* thisPointer );
@@ -33,8 +40,13 @@ private:
 private:
 
   int listenSocket_;
+
   pthread_t listenThread_;
 
+  std::list<ClientSession*> sessions_;
+
 };
+
+
 
 #endif // SERVER_H

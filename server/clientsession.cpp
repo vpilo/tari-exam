@@ -8,22 +8,25 @@
  * (at your option) any later version.
  */
 
-#include "connection.h"
+#include "clientsession.h"
+#include "server.h"
 
 #include <unistd.h>
 
 
 
-Connection::Connection( const int socket )
-: socket_( socket )
+ClientSession::ClientSession( Server* parent, const int socket )
+: server_( parent )
+, socket_( socket )
 {
 
 }
 
 
 
-Connection::~Connection()
+ClientSession::~ClientSession()
 {
+  server_->removeSession( this );
   close( socket_ );
 }
 
