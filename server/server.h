@@ -18,7 +18,7 @@
 
 #include "errors.h"
 
-class ClientSession;
+class SessionClient;
 
 
 
@@ -31,11 +31,22 @@ public:
     Errors::ErrorCode initialize( const char* address, const int port );
 
     void addSession( int newSocket );
-    void removeSession( ClientSession* session );
+    void removeSession( SessionClient* client );
+
 
 private:
 
   static void* waitConnections( void* thisPointer );
+
+
+private:
+
+  struct SessionData
+  {
+    SessionClient* client;
+    pthread_t thread;
+  };
+
 
 private:
 
@@ -45,7 +56,8 @@ private:
 
   pthread_mutex_t* accessMutex_;
 
-  std::list<ClientSession*> sessions_;
+  std::list<SessionData*> sessions_;
+
 
 };
 

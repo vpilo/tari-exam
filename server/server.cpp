@@ -55,11 +55,16 @@ void Server::addSession( int newSocket )
   // The client session will take care of the socket and free it up when done.
   // It will also self-destruct when not needed anymore.
 
-  ClientSession* session = new ClientSession( this, newSocket );
+  SessionData* newSession = new SessionData;
+  newSession->client = new SessionClient( this, newSocket );
+
+  pthread_create( &newSession->thread, NULL, &SessionClient::pollForData, newSession->client );
 
   pthread_mutex_lock( accessMutex_ );
-  sessions_.push_back( session );
+  sessions_.push_back( newSession );
   pthread_mutex_unlock( accessMutex_ );
+
+  Common::debug( "Session %x registered, %ul active", newSession->client, sessions_.size() );
 }
 
 
@@ -116,13 +121,39 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
 
 
 
-void Server::removeSession( ClientSession* session )
+void Server::removeSession( SessionClient* client )
 {
+  bool found = false;
+  std::list<SessionData*>::iterator it;
+  SessionData* current;
+
   pthread_mutex_lock( accessMutex_ );
-  sessions_.remove( session );
+
+  for( it = sessions_.begin(); it != sessions_.end(); it++ )
+  {
+    current = (*it);
+    if( current->client == client )
+    {
+      found = true;
+      break;
+    }
+  }
+
+  if( found )
+  {
+    sessions_.remove( current );
+    delete current;
+  }
+  else
+  {
+    Common::error( "Session %x was not found!" );
+  }
+
   pthread_mutex_unlock( accessMutex_ );
 
-  // We won't delete the ClientSession, it does so by itself
+  Common::debug( "Session %x ended, %ul remaining", client, sessions_.size() );
+
+  // We won't delete the SessionClient, it does so by itself
 }
 
 

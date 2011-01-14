@@ -11,23 +11,31 @@
 #ifndef CLIENTSESSION_H
 #define CLIENTSESSION_H
 
-
 class Server;
 
 
 
-class ClientSession
+class SessionClient
 {
 
   public:
-    ClientSession( Server* parent, const int socket );
-    virtual ~ClientSession();
+
+    SessionClient( Server* parent, const int socket );
+    virtual ~SessionClient();
+
+
+  public:
+
+    static void* pollForData( void* thisPointer );
+
 
   private:
-    int socket_;
 
     /// Pointer to the parent server
     Server* server_;
+
+    int socket_;
+
 
 };
 
