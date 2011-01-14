@@ -33,6 +33,11 @@
 Server::Server()
 : listenThread_( 0 )
 {
+  int result = pthread_mutex_init( accessMutex_, NULL );
+  if( result != 0 )
+  {
+    Common::fatal( "Server mutex creation failed: error %d", result );
+  }
 }
 
 
@@ -40,6 +45,7 @@ Server::Server()
 Server::~Server()
 {
   pthread_cancel( listenThread_ );
+  pthread_mutex_destroy( accessMutex_ );
 }
 
 
@@ -51,7 +57,9 @@ void Server::addSession( int newSocket )
 
   ClientSession* session = new ClientSession( this, newSocket );
 
+  pthread_mutex_lock( accessMutex_ );
   sessions_.push_back( session );
+  pthread_mutex_unlock( accessMutex_ );
 }
 
 
@@ -110,7 +118,9 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
 
 void Server::removeSession( ClientSession* session )
 {
+  pthread_mutex_lock( accessMutex_ );
   sessions_.remove( session );
+  pthread_mutex_unlock( accessMutex_ );
 
   // We won't delete the ClientSession, it does so by itself
 }
