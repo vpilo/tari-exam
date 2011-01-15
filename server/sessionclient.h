@@ -11,12 +11,18 @@
 #ifndef CLIENTSESSION_H
 #define CLIENTSESSION_H
 
+#include "message.h"
+
+#include <list>
+
+
 class Server;
 
 
 
 class SessionClient
 {
+
 
   public:
 
@@ -31,10 +37,20 @@ class SessionClient
 
   private:
 
+    void getMessage( const void* buffer, int size );
+    bool readData();
+    bool writeData();
+
+
+  private:
+
     /// Pointer to the parent server
     Server* server_;
 
     int socket_;
+
+    std::list<Message*> receivingQueue_;
+    std::list<Message*> sendingQueue_;
 
 
 };
