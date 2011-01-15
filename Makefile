@@ -15,16 +15,16 @@ DEBUG = -g
 INCLUDEDIRS= -I common/ -I client/ -I server/ -Lbuild/
 
 # Common code source & header files
-GENERIC_SOURCES = common/common.cpp common/message.cpp
-GENERIC_HEADERS = common/common.h   common/message.h   common/errors.h
+GENERIC_SOURCES = common/common.cpp common/message.cpp common/sessionbase.cpp
+GENERIC_HEADERS = common/common.h   common/message.h   common/sessionbase.h   common/errors.h
 
 # Server files
 SERVER_SOURCES = server/server.cpp server/sessionclient.cpp server/main.cpp
 SERVER_HEADERS = server/server.h   server/sessionclient.h
 
 # Client files
-CLIENT_SOURCES = client/client.cpp client/main.cpp
-CLIENT_HEADERS = client/client.h
+CLIENT_SOURCES = client/client.cpp client/sessionserver.cpp client/main.cpp
+CLIENT_HEADERS = client/client.h   client/sessionserver.h
 
 # Libraries to include in the binaries
 LIBRARIES = -lncurses -lpthread

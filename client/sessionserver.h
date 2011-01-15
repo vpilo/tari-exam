@@ -8,28 +8,29 @@
  * (at your option) any later version.
  */
 
-#ifndef SESSIONCLIENT_H
-#define SESSIONCLIENT_H
+#ifndef SESSIONSERVER_H
+#define SESSIONSERVER_H
 
 #include "sessionbase.h"
 
 
-class Server;
+class Client;
 
 
 
 /**
- * @class SessionClient
+ * @class SessionServer
  *
- * A connection to a client within the server.
- *
+ * Manages the connection to the server within the client application.
  */
-class SessionClient : public SessionBase
+class SessionServer : public SessionBase
 {
   public:
 
-    SessionClient( Server* parent, const int socket );
-    virtual ~SessionClient();
+    SessionServer( Client* parent, const int socket );
+    virtual ~SessionServer();
+
+    virtual void disconnect();
 
 
   private:
@@ -39,12 +40,12 @@ class SessionClient : public SessionBase
 
   private:
 
-    /// Pointer to the parent server
-    Server* server_;
+    /// Pointer to the parent client
+    Client* client_;
 
 
 };
 
 
 
-#endif // SESSIONCLIENT_H
+#endif // SESSIONSERVER_H
