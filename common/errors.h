@@ -25,6 +25,7 @@ class Errors
     , Error_Socket_Option
     , Error_Socket_Bind
     , Error_Socket_Listen
+    , Error_Socket_Connection
     };
 
 
