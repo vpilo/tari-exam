@@ -15,8 +15,8 @@ DEBUG = -g
 INCLUDEDIRS= -I common -I client -I server
 
 # Common code source & header files
-GENERIC_SOURCES = common/common.cpp
-GENERIC_HEADERS = common/common.h common/errors.h
+GENERIC_SOURCES = common/common.cpp common/message.cpp
+GENERIC_HEADERS = common/common.h   common/message.h   common/errors.h
 
 # Server files
 SERVER_SOURCES = server/server.cpp server/sessionclient.cpp server/main.cpp
