@@ -40,8 +40,8 @@ private:
 
   int socket_;
 
-  pthread_t connectionThread_;
   SessionServer* connection_;
+  pthread_t connectionThread_;
 
 
 };

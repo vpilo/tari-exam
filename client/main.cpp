@@ -44,7 +44,7 @@ int main( int argc, char* argv[] )
 
   if( argc == 2 )
   {
-    char* serverIpString = serverIpString = argv[ 1 ];
+    char* serverIpString = argv[ 1 ];
     if( strcmp( serverIpString, "-h" ) == 0 )
     {
       usage( argv[ 0 ] );

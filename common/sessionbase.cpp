@@ -133,6 +133,8 @@ void* SessionBase::pollForData( void* thisPointer )
   }
 
   delete self;
+
+  return NULL; // Unused value
 }
 
 

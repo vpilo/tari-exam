@@ -34,7 +34,7 @@ SessionClient::~SessionClient()
 void SessionClient::availableMessages()
 {
   Message* message;
-  while( message = receiveMessage() )
+  while( ( message = receiveMessage() ) != NULL )
   {
     switch( message->type() )
     {

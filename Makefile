@@ -9,24 +9,24 @@
 #
 
 # Uncomment to enable debugging symbols
-DEBUG = -g
+DEBUG = -O0 -g3 -fno-inline -Wall -Woverloaded-virtual -Wsign-compare -Wundef
 
 # Where to find includes
-INCLUDEDIRS= -I common/ -I client/ -I server/ -Lbuild/
+INCLUDEDIRS= -I common/ -I common/messages/ -I client/ -I server/ -Lbuild/
 
 # Common code source & header files
-GENERIC_SOURCES = common/common.cpp common/message.cpp common/sessionbase.cpp
-GENERIC_HEADERS = common/common.h   common/message.h   common/sessionbase.h   common/errors.h
+GENERIC_SOURCES = common/*.cpp common/messages/*.cpp
+GENERIC_HEADERS = common/*.h   common/messages/*.h
 
 # Server files
-SERVER_SOURCES = server/server.cpp server/sessionclient.cpp server/main.cpp
-SERVER_HEADERS = server/server.h   server/sessionclient.h
+SERVER_SOURCES = server/*.cpp
+SERVER_HEADERS = server/*.h
 
 # Client files
-CLIENT_SOURCES = client/client.cpp client/sessionserver.cpp client/main.cpp
-CLIENT_HEADERS = client/client.h   client/sessionserver.h
+CLIENT_SOURCES = client/*.cpp
+CLIENT_HEADERS = client/*.h
 
-# Libraries to include in the binaries
+# Libraries to link in the binaries
 LIBRARIES = -lncurses -lpthread
 
 # Default target: compiles the executable files

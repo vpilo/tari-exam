@@ -98,7 +98,7 @@ void Server::changeSessionState( SessionClient* client, Message::Type messageTyp
   {
     case Message::MSG_HELLO:
       expectedState = CLIENT_STATE_START;
-      nextState = CLIENT_STATE_READY;
+      nextState = CLIENT_STATE_IDENTIFY;
       break;
     case Message::MSG_BYE:
       expectedState = CLIENT_STATE_READY;
@@ -160,7 +160,6 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
   {
     return Errors::Error_Invalid_Address;
   }
-  in_addr_t listenIP = inet_addr( address );
 
   // Set up the address where to listen
   sockaddr_in myAddress;
@@ -240,5 +239,7 @@ void* Server::waitConnections( void* thisPointer )
 
     self->addSession( newConnection );
   }
+
+  return NULL; // Unused value
 }
 
