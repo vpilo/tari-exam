@@ -60,6 +60,7 @@ Message* Message::parseData( const void* buffer, int size )
 {
   if( size < 1 )
   {
+    Common::error( "Received empty message!" );
     return NULL;
   }
 
@@ -75,6 +76,7 @@ Message* Message::parseData( const void* buffer, int size )
   // Received data is shorter than the minimum message size, cannot be a valid message
   if( size < messageDataSize )
   {
+    Common::error( "Received invalid message! Minimum size is %d, but received %d", messageDataSize, size );
     return NULL;
   }
 
@@ -82,9 +84,10 @@ Message* Message::parseData( const void* buffer, int size )
   memcpy( &messageData, buffer, messageDataSize );
 
   // Identify the command
-  Message::Type type;
+  Message::Type type = Message::MSG_INVALID;
   if     ( messageData.command == "HELLO" ) type = Message::MSG_HELLO;
   else if( messageData.command == "BYE"   ) type = Message::MSG_BYE;
+  // TODO Add the rest of the commands
   else
   {
     Common::error( "Received invalid command \"%s\"!", messageData.command );
@@ -92,11 +95,23 @@ Message* Message::parseData( const void* buffer, int size )
     return NULL;
   }
 
-
   Message* message = NULL;
 
+  switch( type )
+  {
+    // Simple messages don't need a specialized class
+    case Message::MSG_HELLO:
+    case Message::MSG_BYE:
+      message = new Message;
+      message->type_ = type;
+      break;
 
+    default:
 //     message = new HelloMessage();
+      break;
+  }
+
+  return message;
 }
 
 
