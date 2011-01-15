@@ -33,7 +33,7 @@
 Server::Server()
 : listenThread_( 0 )
 {
-  int result = pthread_mutex_init( accessMutex_, NULL );
+  int result = pthread_mutex_init( &accessMutex_, NULL );
   if( result != 0 )
   {
     Common::fatal( "Server mutex creation failed: error %d", result );
@@ -45,7 +45,7 @@ Server::Server()
 Server::~Server()
 {
   pthread_cancel( listenThread_ );
-  pthread_mutex_destroy( accessMutex_ );
+  pthread_mutex_destroy( &accessMutex_ );
 }
 
 
@@ -60,11 +60,11 @@ void Server::addSession( int newSocket )
 
   pthread_create( &newSession->thread, NULL, &SessionClient::pollForData, newSession->client );
 
-  pthread_mutex_lock( accessMutex_ );
+  pthread_mutex_lock( &accessMutex_ );
   sessions_.push_back( newSession );
-  pthread_mutex_unlock( accessMutex_ );
+  pthread_mutex_unlock( &accessMutex_ );
 
-  Common::debug( "Session %x registered, %ul active", newSession->client, sessions_.size() );
+  Common::debug( "Session %x registered, %lu active", newSession->client, sessions_.size() );
 }
 
 
@@ -127,7 +127,7 @@ void Server::removeSession( SessionClient* client )
   std::list<SessionData*>::iterator it;
   SessionData* current;
 
-  pthread_mutex_lock( accessMutex_ );
+  pthread_mutex_lock( &accessMutex_ );
 
   for( it = sessions_.begin(); it != sessions_.end(); it++ )
   {
@@ -149,9 +149,9 @@ void Server::removeSession( SessionClient* client )
     Common::error( "Session %x was not found!" );
   }
 
-  pthread_mutex_unlock( accessMutex_ );
+  pthread_mutex_unlock( &accessMutex_ );
 
-  Common::debug( "Session %x ended, %ul remaining", client, sessions_.size() );
+  Common::debug( "Session %x ended, %lu remaining", client, sessions_.size() );
 
   // We won't delete the SessionClient, it does so by itself
 }

@@ -54,7 +54,7 @@ private:
 
   pthread_t listenThread_;
 
-  pthread_mutex_t* accessMutex_;
+  pthread_mutex_t accessMutex_;
 
   std::list<SessionData*> sessions_;
 
