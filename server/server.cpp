@@ -84,7 +84,6 @@ void Server::addSession( int newSocket )
 
 void Server::changeSessionState( SessionClient* client, Message::Type messageType )
 {
-  Common::debug( "Session change" );
   SessionData* current = findSession( client );
 
   if( ! current )
@@ -99,10 +98,10 @@ void Server::changeSessionState( SessionClient* client, Message::Type messageTyp
   {
     case Message::MSG_HELLO:
       expectedState = CLIENT_STATE_START;
-      nextState = CLIENT_STATE_IDENTIFY;
+      nextState = CLIENT_STATE_READY;
       break;
     case Message::MSG_BYE:
-      expectedState = CLIENT_STATE_END;
+      expectedState = CLIENT_STATE_READY;
       nextState = CLIENT_STATE_INVALID;
       break;
 
@@ -110,6 +109,8 @@ void Server::changeSessionState( SessionClient* client, Message::Type messageTyp
       Common::error( "Session 0x%X sent an invalid state change message of type %d", client, messageType );
       client->disconnect();
   }
+
+// States: CLIENT_STATE_INVALID CLIENT_STATE_START CLIENT_STATE_IDENTIFY CLIENT_STATE_READY CLIENT_STATE_END
 
   if( current->state != expectedState )
   {

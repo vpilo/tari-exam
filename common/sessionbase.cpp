@@ -71,6 +71,13 @@ void* SessionBase::pollForData( void* thisPointer )
   // end when we have to disconnect and all pending messages have been sent
   while( ! self->disconnectionFlag_ || self->sendingQueue_.size() > 0 )
   {
+/*
+    Common::debug( "** pollForData(): %s; %d in send queue; %d in receive queue",
+                   self->disconnectionFlag_ ? "Exiting" : "Running",
+                   self->sendingQueue_.size(),
+                   self->receivingQueue_.size() );
+*/
+
     // If there is nothing to send, don't poll for the availability of a write operation
     if( self->sendingQueue_.size() > 0 )
     {
@@ -81,6 +88,8 @@ void* SessionBase::pollForData( void* thisPointer )
       watched.events = POLLIN;
     }
 
+    bool hasError = false;
+
     int ready = ppoll( &watched, 1, &timeout, &set );
 
     if( ready == 0 )
@@ -90,31 +99,36 @@ void* SessionBase::pollForData( void* thisPointer )
     else if( ready == -1 )
     {
       Common::error( "Session 0x%X: error: Error %d: %s", self, errno, strerror( errno ) );
-      self->disconnectionFlag_ = true;
+      hasError = true;
     }
 
     if( watched.revents & POLLERR )
     {
       Common::error( "Session 0x%X: error: Unspecified error condition", self );
-      self->disconnectionFlag_ = true;
+      hasError = true;
     }
     if( watched.revents & POLLHUP )
     {
       Common::error( "Session 0x%X: error: Remote end hanged up", self );
-      self->disconnectionFlag_ = true;
+      hasError = true;
     }
     if( watched.revents & POLLNVAL )
     {
       Common::error( "Session 0x%X: error: Socket is closed", self );
-      self->disconnectionFlag_ = true;
+      hasError = true;
     }
     if( watched.revents & POLLIN )
     {
-      self->disconnectionFlag_ = self->readData();
+      hasError = self->readData();
     }
     if( watched.revents & POLLOUT )
     {
-      self->disconnectionFlag_ = self->writeData();
+      hasError = self->writeData();
+    }
+
+    if( hasError )
+    {
+      self->disconnectionFlag_ = true;
     }
   }
 
@@ -148,10 +162,7 @@ bool SessionBase::readData()
   tmp[ readBytes ] = '\0';
   Common::debug( "Data dump (%d bytes):\n***************\n%s\n***************", readBytes, tmp );
 
-  Common::debug( "Creating Message" );
-
   Message* message = Message::parseData( buffer, readBytes );
-
   if( message != NULL && message->type() != Message::MSG_INVALID )
   {
     receivingQueue_.push_back( message );
@@ -180,7 +191,6 @@ Message* SessionBase::receiveMessage()
   Message* message = receivingQueue_.back();
   receivingQueue_.pop_back();
 
-  Common::debug( "Taken a message of type %d", message->type() );
   return message;
 }
 
@@ -188,7 +198,6 @@ Message* SessionBase::receiveMessage()
 
 void SessionBase::sendMessage( Message* message )
 {
-  Common::debug( "Queueing a message of type %d", message->type() );
   sendingQueue_.push_back( message );
 }
 
