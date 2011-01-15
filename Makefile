@@ -12,7 +12,7 @@
 DEBUG = -g
 
 # Where to find includes
-INCLUDEDIRS= -I common -I client -I server
+INCLUDEDIRS= -I common/ -I client/ -I server/ -Lbuild/
 
 # Common code source & header files
 GENERIC_SOURCES = common/common.cpp common/message.cpp
@@ -30,23 +30,18 @@ CLIENT_HEADERS = client/client.h
 LIBRARIES = -lncurses -lpthread
 
 # Default target: compiles the executable files
-all: .generic server #client
+all: server #client
 
 # Clean up all temporary and debug files and all executables, to force the compiler to rebuild the project from scratch
 clean:
-	rm -f build/*
-
-
-# Intermediate step, compile the common source files into an object file, ready to be included in a binary
-.generic: $(GENERIC_SOURCES) $(GENERIC_HEADERS)
-	g++ $(DEBUG) -c -o build/common.o $(GENERIC_SOURCES) $(INCLUDEDIRS)
+	@rm -rf build/*
 
 
 # Server
-server: .generic $(SERVER_SOURCES) $(SERVER_HEADERS)
-	g++ $(DEBUG) -o build/lanmessenger_server build/common.o $(SERVER_SOURCES) $(INCLUDEDIRS) $(LIBRARIES)
+server: $(GENERIC_SOURCES) $(GENERIC_HEADERS) $(SERVER_SOURCES) $(SERVER_HEADERS)
+	g++ $(DEBUG) -o build/lanmessenger_server $(GENERIC_SOURCES) $(SERVER_SOURCES) $(INCLUDEDIRS) $(LIBRARIES)
 
 # Client
-client: .generic $(CLIENT_SOURCES) $(CLIENT_HEADERS)
-	g++ $(DEBUG) -o build/lanmessenger build/common.o $(CLIENT_SOURCES) $(INCLUDEDIRS) $(LIBRARIES)
+client: $(GENERIC_SOURCES) $(GENERIC_HEADERS) $(CLIENT_SOURCES) $(CLIENT_HEADERS)
+	g++ $(DEBUG) -o build/lanmessenger $(GENERIC_SOURCES) $(CLIENT_SOURCES) $(INCLUDEDIRS) $(LIBRARIES)
 
