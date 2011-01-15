@@ -80,6 +80,7 @@ int main( int argc, char* argv[] )
   }
 
   // Wait for a quit signal to arrive
+  sem_init( &quitSignal, 0, 0 );
   sem_wait( &quitSignal );
 
   delete server;
