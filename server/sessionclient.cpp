@@ -152,7 +152,7 @@ bool SessionClient::readData()
   {
     delete message;
     // Disconnect the client
-    delete this;
+    return false;
   }
 
   free( buffer );
