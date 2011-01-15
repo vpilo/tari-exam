@@ -1,2 +1,8 @@
+# IDE project files
 .kdev*
+
+# Built binaries and intermediate files
 build
+
+# Reference code
+old

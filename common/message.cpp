@@ -13,16 +13,11 @@
 #include "common.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 
-/**
- * @def COMMAND_SIZE
- *
- * Size of the command message in bytes.
- *
- * Add one for the terminating NULL character.
- */
-#define COMMAND_SIZE  6
+#define COMMAND_HELLO "HELLO"
+#define COMMAND_BYE   "BYE"
 
 
 
@@ -49,52 +44,8 @@ Message::~Message()
 
 
 
-bool Message::operator == ( const Message& other ) const
+Message* Message::createMessage( const Message::Type type )
 {
-  return ( type_ == other.type_ );
-}
-
-
-
-Message* Message::parseData( const void* buffer, int size )
-{
-  if( size < 1 )
-  {
-    Common::error( "Received empty message!" );
-    return NULL;
-  }
-
-  // Container for the common message data
-  struct MessageContents
-  {
-    // All commands are of the same size
-    char command[ COMMAND_SIZE ];
-    int size;
-  };
-  int messageDataSize = sizeof( MessageContents );
-
-  // Received data is shorter than the minimum message size, cannot be a valid message
-  if( size < messageDataSize )
-  {
-    Common::error( "Received invalid message! Minimum size is %d, but received %d", messageDataSize, size );
-    return NULL;
-  }
-
-  MessageContents messageData;
-  memcpy( &messageData, buffer, messageDataSize );
-
-  // Identify the command
-  Message::Type type = Message::MSG_INVALID;
-  if     ( messageData.command == "HELLO" ) type = Message::MSG_HELLO;
-  else if( messageData.command == "BYE"   ) type = Message::MSG_BYE;
-  // TODO Add the rest of the commands
-  else
-  {
-    Common::error( "Received invalid command \"%s\"!", messageData.command );
-
-    return NULL;
-  }
-
   Message* message = NULL;
 
   switch( type )
@@ -111,7 +62,81 @@ Message* Message::parseData( const void* buffer, int size )
       break;
   }
 
+  if( message )
+  {
+    Common::debug( "Made new message of type %d", message->type_ );
+  }
+  else
+  {
+    Common::debug( "Could not create the message. Invalid type %d", type );
+  }
   return message;
+}
+
+
+
+void* Message::data( int& size ) const
+{
+  MessageContents rawData;
+  rawData.size = 0; // No extra fields
+
+  switch( type_ )
+  {
+    case Message::MSG_HELLO:
+      strcpy( rawData.command, COMMAND_HELLO );
+      break;
+
+    case Message::MSG_BYE:
+      strcpy( rawData.command, COMMAND_BYE );
+      break;
+
+    default:
+      // We can't manage more complex message types
+      return NULL;
+  }
+
+  size = sizeof( MessageContents );
+  void* buffer = malloc( size );
+  memcpy( buffer, &rawData, size );
+
+  return buffer;
+}
+
+
+
+Message* Message::parseData( const void* buffer, int size )
+{
+  if( size < 1 )
+  {
+    Common::error( "Received empty message!" );
+    return NULL;
+  }
+
+  int messageDataSize = sizeof( MessageContents );
+
+  // Received data is shorter than the minimum message size, cannot be a valid message
+  if( size < messageDataSize )
+  {
+    Common::error( "Received invalid message! Minimum size is %d, but received %d", messageDataSize, size );
+    return NULL;
+  }
+
+  MessageContents messageData;
+  memcpy( &messageData, buffer, messageDataSize );
+
+  // Identify the command
+  Message::Type type = Message::MSG_INVALID;
+  if     ( strcmp( messageData.command, COMMAND_HELLO ) == 0 ) type = Message::MSG_HELLO;
+  else if( strcmp( messageData.command, COMMAND_BYE   ) == 0 ) type = Message::MSG_BYE;
+  // TODO Add the rest of the commands
+  else
+  {
+    Common::error( "Received invalid command \"%s\"!", messageData.command );
+
+    return NULL;
+  }
+
+  return createMessage( type );
 }
 
 
@@ -119,6 +144,13 @@ Message* Message::parseData( const void* buffer, int size )
 Message::Type Message::type() const
 {
   return type_;
+}
+
+
+
+bool Message::operator == ( const Message& other ) const
+{
+  return ( type_ == other.type_ );
 }
 
 
