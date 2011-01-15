@@ -12,11 +12,14 @@
 #define CLIENT_H
 
 #include <netinet/in.h>
-// #include <pthread.h>
+#include <pthread.h>
 
 #include <list>
 
 #include "errors.h"
+
+
+class SessionServer;
 
 
 
@@ -30,12 +33,15 @@ public:
 
   Errors::ErrorCode initialize( const in_addr serverIp, const int serverPort );
 
+  void connectionClosed( SessionServer* connection );
+  void run();
 
 private:
 
   int socket_;
 
-//   pthread_mutex_t accessMutex_;
+  pthread_t connectionThread_;
+  SessionServer* connection_;
 
 
 };

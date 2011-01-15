@@ -12,25 +12,60 @@
 
 #include "common.h"
 #include "errors.h"
+#include "sessionserver.h"
 
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <semaphore.h>
 #include <string.h>
 #include <unistd.h>
 
 
+// Semaphore used to end the session
+sem_t sessionEndSignal;
+
+
 
 Client::Client()
+: connection_( NULL )
+, connectionThread_( 0 )
 {
+  sem_init( &sessionEndSignal, 0, 0 );
 }
 
 
 
 Client::~Client()
 {
+  if( connectionThread_ != 0 )
+  {
+    pthread_cancel( connectionThread_ );
+  }
+
+  if( connection_ )
+  {
+    delete connection_;
+  }
+
   close( socket_ );
+}
+
+
+
+void Client::connectionClosed( SessionServer* connection )
+{
+  if( connection != connection_ )
+  {
+    Common::fatal( "Unknown connection was closed!" );
+  }
+
+  connection_ = 0;
+
+  Common::debug( "Connection closed" );
+
+  sem_post( &sessionEndSignal );
 }
 
 
@@ -60,7 +95,29 @@ Errors::ErrorCode Client::initialize( const in_addr serverIp, const int serverPo
     return Errors::Error_Socket_Connection;
   }
 
+  connection_ = new SessionServer( this, socket_ );
+
+  pthread_create( &connectionThread_, NULL, &SessionServer::pollForData, connection_ );
+
+  Common::debug( "Connection established" );
+
   return Errors::Error_None;
+}
+
+
+
+void Client::run()
+{
+  sleep( 1 );
+
+  // If we've been disconnected, the pointer will be null
+  if( connection_ )
+  {
+    connection_->disconnect();
+  }
+
+  // Wait for the connection to be closed, then return
+  sem_wait( &sessionEndSignal );
 }
 
 

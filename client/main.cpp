@@ -12,41 +12,19 @@
 #include "common.h"
 #include "errors.h"
 
-#include <arpa/inet.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <unistd.h>
+// #include <arpa/inet.h>
+#include <netdb.h>
 #include <string.h>
 
 
-// Semaphore used to quit
-sem_t quitSignal;
+#define DEFAULT_SERVER_IP  "127.0.0.1"
 
 
 
-void handleSignal( const int signal )
+void usage( const char* programName )
 {
-  // More signals are available at http://www.comptechdoc.org/os/linux/programming/linux_pgsignals.html
-  switch( signal )
-  {
-    case SIGINT:
-      Common::debug( "Interrupt signal catched!" );
-      break;
-    case SIGHUP:
-      Common::debug( "Hangup signal catched!" );
-      break;
-    case SIGTERM:
-      Common::debug( "Terminate signal catched!" );
-      break;
-    case SIGQUIT:
-      Common::debug( "Quit signal catched!" );
-      break;
-    default:
-      Common::debug( "Signal %d catched!", signal );
-      break;
-  }
-
-  sem_post( &quitSignal );
+  fprintf( stderr, "Usage: %s [address]\n",programName );
+      fprintf( stderr, "If the [address] argument is omitted, the client will try to connect to %s.\n", DEFAULT_SERVER_IP );
 }
 
 
@@ -61,28 +39,31 @@ int main( int argc, char* argv[] )
 
   // Check command-line arguments:
 
-  in_addr connectAddr;
-  if( argc < 2 || inet_aton( argv[ 1 ], &connectAddr ) == 0 )
-  {
-    fprintf( stderr, "Usage: %s <server address>\n", argv[ 0 ] );
-    return 1;
-  }
+  in_addr serverIp;
+  serverIp.s_addr = htonl( INADDR_LOOPBACK );
 
+  if( argc == 2 )
+  {
+    char* serverIpString = serverIpString = argv[ 1 ];
+    if( strcmp( serverIpString, "-h" ) == 0 )
+    {
+      usage( argv[ 0 ] );
+      return 1;
+    }
+
+    hostent* host = gethostbyname( serverIpString );
+
+    if( ! host || h_errno != NETDB_SUCCESS )
+    {
+      fprintf( stderr, "Unable to connect to \"%s\": %s\n", serverIpString, hstrerror( h_errno ) );
+      return 2;
+    }
+    serverIp = *( reinterpret_cast<in_addr*>( host->h_addr ) );
+  }
 
   Client* client = new Client();
 
-  // Create a semaphore as a quit condition
-  sem_init( &quitSignal, 0, 0 );
-
-  // Handle signals
-  signal( SIGCHLD,SIG_IGN );       // ignore child
-  signal( SIGTSTP,SIG_IGN );       // ignore tty signals
-  signal( SIGINT, handleSignal );  // interrupt signal
-  signal( SIGHUP, handleSignal );  // hangup signal
-  signal( SIGTERM, handleSignal ); // terminate signal
-  signal( SIGQUIT, handleSignal ); // quit signal
-
-  Errors::ErrorCode status = client->initialize( connectAddr, SERVER_PORT );
+  Errors::ErrorCode status = client->initialize( serverIp, SERVER_PORT );
   if( status != Errors::Error_None )
   {
     Common::error( "Client could not be started: error %d", status );
@@ -91,10 +72,11 @@ int main( int argc, char* argv[] )
     return status;
   }
 
-  // Wait for a quit signal to arrive
-  sem_wait( &quitSignal );
+  client->run();
 
   delete client;
+
+  Common::debug( "Goodbye!" );
 
   return Errors::Error_None;
 }
