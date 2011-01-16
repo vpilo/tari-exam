@@ -13,6 +13,7 @@
 
 #include "errors.h"
 #include "message.h"
+#include "protocol.h"
 
 #include <netinet/in.h>
 #include <pthread.h>
@@ -36,6 +37,8 @@ public:
     void removeSession( SessionClient* client );
     void checkSessionStateChange( SessionClient* client, Message::Type messageType );
 
+    void clientChangedNickName( SessionClient* client, const char* newNickName );
+
 
 private:
 
@@ -53,6 +56,7 @@ private:
     SessionClient* client;
     pthread_t thread;
     ClientState state;
+    char nickName[ MAX_NICKNAME_SIZE ];
   };
 
 
@@ -64,6 +68,8 @@ private:
 
 
 private:
+
+  int connectionsCounter_;
 
   int listenSocket_;
 

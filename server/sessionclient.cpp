@@ -12,6 +12,7 @@
 
 #include "common.h"
 #include "message.h"
+#include "nicknamemessage.h"
 #include "server.h"
 
 
@@ -37,18 +38,20 @@ void SessionClient::availableMessages()
   while( ( message = receiveMessage() ) != NULL )
   {
     server_->checkSessionStateChange( this, message->type() );
-    // TODO Do something else on received messages
-    /*
+
     switch( message->type() )
     {
-      case Message::MSG_HELLO:
-      case Message::MSG_BYE:
+      case Message::MSG_NICKNAME:
+      {
+        NicknameMessage* nickNameMessage = dynamic_cast<NicknameMessage*>( message );
+        server_->clientChangedNickName( this, nickNameMessage->nickName() );
         break;
+      }
 
       default:
         break;
     }
-    */
+
     delete message;
   }
 

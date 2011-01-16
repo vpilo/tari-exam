@@ -62,7 +62,14 @@ char* NicknameMessage::data( int& size ) const
 
 
 
-bool NicknameMessage::parseData( const void* buffer, int size )
+const char* NicknameMessage::nickName() const
+{
+  return nickname_;
+}
+
+
+
+bool NicknameMessage::parseData( const char* buffer, int size )
 {
   // We only have one field of specific size
   if( size != NICKNAME_FIELD_SIZE )
@@ -70,6 +77,8 @@ bool NicknameMessage::parseData( const void* buffer, int size )
     Common::error( "Invalid buffer length: got %d, expected %d!", size, NICKNAME_FIELD_SIZE );
     return false;
   }
+
+  strncpy( nickname_, buffer, size );
 
   return true;
 }

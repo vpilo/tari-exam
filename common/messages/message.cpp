@@ -96,7 +96,7 @@ char* Message::data( int& size ) const
 }
 
 
-bool Message::parseData( const void*, int )
+bool Message::parseData( const char* buffer, int size )
 {
   // Does nothing: class Message has no extra fields
   return true;

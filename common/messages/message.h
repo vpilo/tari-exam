@@ -77,7 +77,7 @@ class Message
      *
      * @return false on error (invalid data in the buffer)
      */
-    virtual bool parseData( const void* buffer, int size );
+    virtual bool parseData( const char* buffer, int size );
 
 
   private:

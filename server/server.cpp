@@ -34,7 +34,8 @@
 
 
 Server::Server()
-: listenThread_( 0 )
+: connectionsCounter_( 0 )
+, listenThread_( 0 )
 {
   int result = pthread_mutex_init( &accessMutex_, NULL );
   if( result != 0 )
@@ -67,6 +68,8 @@ Server::~Server()
 
 void Server::addSession( int newSocket )
 {
+  connectionsCounter_++;
+
   // The client session will take care of the socket and free it up when done.
   // It will also self-destruct when not needed anymore.
 
@@ -74,13 +77,16 @@ void Server::addSession( int newSocket )
   newSession->client = new SessionClient( this, newSocket );
   newSession->state = CLIENT_STATE_START;
 
+  // Assign a default unique name to the client
+  sprintf( newSession->nickName, "Client %d", connectionsCounter_ );
+
   pthread_create( &newSession->thread, NULL, &SessionClient::pollForData, newSession->client );
 
   pthread_mutex_lock( &accessMutex_ );
   sessions_[ newSession->client ] = newSession;
   pthread_mutex_unlock( &accessMutex_ );
 
-  Common::debug( "Session 0x%X registered, %lu active", newSession->client, sessions_.size() );
+  Common::debug( "Session \"%s\" registered, %lu active", newSession->nickName, sessions_.size() );
 }
 
 
@@ -88,10 +94,9 @@ void Server::addSession( int newSocket )
 void Server::checkSessionStateChange( SessionClient* client, Message::Type messageType )
 {
   SessionData* current = findSession( client );
-
   if( ! current )
   {
-    Common::fatal( "Received a session state change from unknown session 0x%X!", client );
+    Common::fatal( "Received a message from unknown session 0x%X!", client );
   }
 
   /*
@@ -123,8 +128,7 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
       break;
 
     default:
-      Common::error( "Session 0x%X sent an invalid state change message of type %d", client, messageType );
-      client->disconnect();
+      // The message doesn't change the session state.
       return;
   }
 
@@ -132,13 +136,28 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
 
   if( std::find( expectedStates.begin(), expectedStates.end(), current->state ) == expectedStates.end() )
   {
-    Common::error( "Session 0x%X sent a wrong state message of type %d", client, messageType );
+    Common::error( "Session \"%s\" sent a wrong state message of type %d", current->nickName, messageType );
     client->disconnect();
     return;
   }
 
   current->state = nextState;
-  Common::debug( "Session 0x%X changed state to %d", client, nextState );
+  Common::debug( "Session \"%s\" changed state to %d", current->nickName, nextState );
+}
+
+
+
+void Server::clientChangedNickName( SessionClient* client, const char* newNickName )
+{
+  SessionData* current = findSession( client );
+  if( ! current )
+  {
+    Common::fatal( "Received a message from unknown session 0x%X!", client );
+  }
+
+  Common::debug( "Session \"%s\" is now known as \"%s\"", current->nickName, newNickName );
+
+  strncpy( current->nickName, newNickName, MAX_NICKNAME_SIZE );
 }
 
 
@@ -220,11 +239,12 @@ void Server::removeSession( SessionClient* client )
   }
 
   sessions_.erase( client );
+
+  Common::debug( "Session \"%s\" ended, %lu remaining", current->nickName, sessions_.size() );
+
   delete current;
 
   pthread_mutex_unlock( &accessMutex_ );
-
-  Common::debug( "Session 0x%X ended, %lu remaining", client, sessions_.size() );
 
   // We won't delete the SessionClient, it does so by itself
 }

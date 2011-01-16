@@ -31,6 +31,14 @@
 
 
 /**
+ * @def MAX_NICKNAME_SIZE
+ *
+ * Maximum length of the user nickname in bytes.
+ */
+#define MAX_NICKNAME_SIZE  36
+
+
+/**
  * Container for the common message data
  */
 struct MessageHeader

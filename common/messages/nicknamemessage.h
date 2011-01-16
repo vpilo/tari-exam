@@ -12,14 +12,7 @@
 #define NICKNAMEMESSAGE_H
 
 #include "message.h"
-
-
-/**
- * @def MAX_NICKNAME_SIZE
- *
- * Maximum length of the nickname in bytes
- */
-#define MAX_NICKNAME_SIZE  36
+#include "protocol.h"
 
 
 /**
@@ -41,10 +34,11 @@ class NicknameMessage : public Message
     NicknameMessage( const char* nickName );
     virtual ~NicknameMessage();
 
+    const char* nickName() const;
     void setNickName( const char* newNickName );
 
 
-  public:
+  protected:
 
     /**
      * Convert the message contents into raw data.
@@ -59,9 +53,6 @@ class NicknameMessage : public Message
      */
     virtual char* data( int& size ) const;
 
-
-  private:
-
     /**
      * Analyzes a data buffer to retrieve the specific message type's data.
      *
@@ -69,7 +60,7 @@ class NicknameMessage : public Message
      *
      * @see Message::parseData()
      */
-    virtual bool parseData( const void* buffer, int size );
+    virtual bool parseData( const char* buffer, int size );
 
 
   private:
