@@ -12,6 +12,7 @@
 
 #include <cstdio>
 #include <cstdarg>
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -72,6 +73,78 @@ void Common::fatal( const char* errorString, ... )
 
 
 
+void Common::printData( const char* buffer, int bufferSize )
+{
+  #define BYTES_PER_LINE  16
+
+  char text[ MAX_STRING_LENGTH ];
+  int pos = 0;
+  int offset = 0;
+
+  debug( "Raw data dump (%d bytes)", bufferSize );
+  writeRawData( "******************************************************************************\n" );
+
+  while( offset < bufferSize )
+  {
+    // Print the offset
+    sprintf( text, "  %05d : ", offset );
+    writeRawData( text );
+
+    // Then the hexadecimal data
+    for( pos = 0; pos < BYTES_PER_LINE; pos++ )
+    {
+      if( ( pos + offset ) < bufferSize )
+      {
+        sprintf( text, "%02x ", (unsigned char) buffer[ pos + offset ] );
+        writeRawData( text );
+      }
+      else
+      {
+        writeRawData( "   " );
+      }
+    }
+
+    writeRawData( ": " );
+
+    // Finally the ASCII data
+    for( pos = 0; pos < BYTES_PER_LINE; pos++ )
+    {
+      char current = ' ';
+
+      if( ( pos + offset ) < bufferSize )
+      {
+        current = buffer[ pos + offset ];
+      }
+
+      if( ( current & 0x80 ) == 0 && isprint( (int)current ) )
+      {
+        // Treat % differently, to avoid it from being parsed by sprintf()
+        if( current == '%' )
+        {
+          writeRawData( "%%" );
+        }
+        else
+        {
+          sprintf( text, "%c", current );
+          writeRawData( text );
+        }
+      }
+      else
+      {
+        writeRawData( "." );
+      }
+    }
+
+    offset += BYTES_PER_LINE;
+
+    writeRawData( "\n" );
+  }
+
+  writeRawData( "******************************************************************************\n" );
+}
+
+
+
 void Common::setLogFile( const char* logFilePath )
 {
    // If a non null and non empty string was given, use the logfile (good for threads)
@@ -100,10 +173,16 @@ void Common::writeLine( const char* prefix, const char* string )
   char line[ MAX_STRING_LENGTH ];
   sprintf( line, "\r%7.3f> %s%s\n", elapsed, prefix, string );
 
+  writeRawData( line );
+}
+
+
+void Common::writeRawData( const char* data )
+{
   // Write it to standard output..
   if( ! useLogFile_ )
   {
-    printf( line );
+    printf( data );
     return;
   }
 
@@ -118,9 +197,8 @@ void Common::writeLine( const char* prefix, const char* string )
     // the OS will close it when we're done
   }
 
-  fwrite( line, strlen( line ), 1, logFileHandle_ );
+  fwrite( data, strlen( data ), 1, logFileHandle_ );
   fflush( logFileHandle_ );
-
 }
 
 

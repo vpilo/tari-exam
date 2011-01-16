@@ -66,11 +66,20 @@ class Common
      */
     static void fatal( const char* errorString, ... );
 
+    /**
+     * Prints binary data.
+     *
+     * @param buffer The data to display
+     * @param size The size of the buffer
+     */
+    static void printData( const char* buffer, int bufferSize );
+
     static void setLogFile( const char* logFilePath );
 
 
 private:
     static void writeLine( const char* prefix, const char* string );
+    static void writeRawData( const char* data );
 
 private:
 

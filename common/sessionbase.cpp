@@ -158,13 +158,10 @@ bool SessionBase::readData()
     Common::error( "Session 0x%X: error: Socket is closed", this );
     return true;
   }
-  // TODO Analyze the buffer for data
-  char tmp[ MAX_MESSAGE_SIZE + 1 ];
-  strncpy( tmp, (char*)buffer, MAX_MESSAGE_SIZE );
-  tmp[ readBytes ] = '\0';
-  Common::debug( "Data dump (%d bytes):\n***************\n%s\n***************", readBytes, tmp );
 
-  Message* message = Message::parseData( buffer, readBytes );
+  Common::printData( (const char*)buffer, readBytes );
+
+  Message* message = Message::parseHeader( buffer, readBytes );
   if( message != NULL && message->type() != Message::MSG_INVALID )
   {
     receivingQueue_.push_back( message );
@@ -222,6 +219,7 @@ bool SessionBase::writeData()
   int size = -1;
   void* buffer = message->data( size );
 
+  Common::printData( (const char*)buffer, size );
   send( socket_, buffer, size, 0 );
 
   free( buffer );
