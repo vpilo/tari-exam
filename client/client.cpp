@@ -108,6 +108,10 @@ Errors::ErrorCode Client::initialize( const in_addr serverIp, const int serverPo
 
 void Client::run()
 {
+  // Ask the nickname to the client
+  // TODO Actually ask it
+  connection_->setNickName( "Valerio" );
+
   sleep( 1 );
 
   // If we've been disconnected, the pointer will be null

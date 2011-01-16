@@ -25,12 +25,17 @@ class Client;
  */
 class SessionServer : public SessionBase
 {
+
   public:
 
     SessionServer( Client* parent, const int socket );
     virtual ~SessionServer();
-
     virtual void disconnect();
+
+
+  public:
+
+    void setNickName( const char* nickName );
 
 
   private:

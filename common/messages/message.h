@@ -39,18 +39,14 @@ class Message
     {
       MSG_INVALID
     , MSG_HELLO
+    , MSG_NICKNAME
     , MSG_BYE
     , MSG_CHAT
     , MSG_FILE_REQUEST
-    , MSG_FILE_ACK
-    , MSG_FILE_NACK
+    , MSG_FILE_RESPONSE
     , MSG_FILE_DATA
+    , MSG_MAX /// Total number of message types. Do not use.
     };
-
-
-  private:
-    Message();
-    Message( const Message& other );
 
 
   public:
@@ -82,7 +78,7 @@ class Message
      * @return
      *  An instance of the proper Message subclass; or NULL in case of an error
      */
-    static Message* parseData( const void* buffer, int size );
+    static Message* parseHeader( const void* buffer, int size );
 
     /**
      * Creates a message of a certain type.
@@ -93,12 +89,34 @@ class Message
     static Message* createMessage( const Type type );
 
 
-  private:
+  protected:
+
+    Message();
+    Message( Type type );
+    Message( const Message& other );
+
+    /**
+     * Get the message header for this kind of message.
+     *
+     * @return The commands used in messages when they're
+     * transferred through the network.
+     */
+    static const char* command( Message::Type type );
+
+    /**
+     * Analyzes a data buffer to retrieve the specific message type's data.
+     *
+     * @return false on error (invalid data in the buffer)
+     */
+    virtual bool parseData( const void* buffer, int size );
+
+
+  protected:
 
     /**
      * Container for the common message data
      */
-    struct MessageContents
+    struct MessageHeader
     {
       // All commands are of the same size
       char command[ COMMAND_SIZE ];

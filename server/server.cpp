@@ -20,6 +20,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <algorithm>
+
+
 
 /**
  * @def MAX_MESSAGE_QUEUE
@@ -91,31 +94,47 @@ void Server::changeSessionState( SessionClient* client, Message::Type messageTyp
     Common::fatal( "Received a session state change from unknown session 0x%X!", client );
   }
 
-  ClientState expectedState;
+  /*
+   * How does this work:
+   * Each message which changes the client state can be received when
+   * the client is in a certain state; for example, clients can't send HELLO when
+   * they have already authenticated.
+   * The list contains all the states in which a client can be if it wants to
+   * send a certain message.
+   */
+  std::list<ClientState> expectedStates;
   ClientState nextState;
 
   switch( messageType )
   {
     case Message::MSG_HELLO:
-      expectedState = CLIENT_STATE_START;
+      expectedStates.push_back( CLIENT_STATE_START );
       nextState = CLIENT_STATE_IDENTIFY;
       break;
+    case Message::MSG_NICKNAME:
+      expectedStates.push_back( CLIENT_STATE_IDENTIFY );
+      nextState = CLIENT_STATE_READY;
+      break;
     case Message::MSG_BYE:
-      expectedState = CLIENT_STATE_READY;
+      expectedStates.push_back( CLIENT_STATE_START );
+      expectedStates.push_back( CLIENT_STATE_IDENTIFY );
+      expectedStates.push_back( CLIENT_STATE_READY );
       nextState = CLIENT_STATE_INVALID;
       break;
 
     default:
       Common::error( "Session 0x%X sent an invalid state change message of type %d", client, messageType );
       client->disconnect();
+      return;
   }
 
 // States: CLIENT_STATE_INVALID CLIENT_STATE_START CLIENT_STATE_IDENTIFY CLIENT_STATE_READY CLIENT_STATE_END
 
-  if( current->state != expectedState )
+  if( std::find( expectedStates.begin(), expectedStates.end(), current->state ) == expectedStates.end() )
   {
     Common::error( "Session 0x%X sent a wrong state message of type %d", client, messageType );
     client->disconnect();
+    return;
   }
 
   current->state = nextState;

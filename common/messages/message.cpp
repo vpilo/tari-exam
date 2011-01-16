@@ -14,15 +14,20 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-
-#define COMMAND_HELLO "HELLO"
-#define COMMAND_BYE   "BYE"
+#include "nicknamemessage.h"
 
 
 
 Message::Message()
-: type_( MSG_INVALID )
+: type_( Message::MSG_INVALID )
+{
+
+}
+
+
+
+Message::Message( Message::Type type )
+: type_( type )
 {
 
 }
@@ -44,6 +49,29 @@ Message::~Message()
 
 
 
+const char* Message::command( Message::Type type )
+{
+  // The maximum message command is defined as COMMAND_SIZE in message.h
+  switch( type )
+  {
+     case Message::MSG_HELLO:          return "HELLO";
+     case Message::MSG_NICKNAME:       return "NICK";
+     case Message::MSG_BYE:            return "BYE";
+     case Message::MSG_CHAT:           return "MSG";
+     case Message::MSG_FILE_REQUEST:   return "FTQ";
+     case Message::MSG_FILE_RESPONSE:  return "FTA";
+     case Message::MSG_FILE_DATA:      return "FTD";
+     case Message::MSG_INVALID:
+     default:
+       break;
+  }
+
+  Common::fatal( "Attempted to call command() on an invalid message!" );
+  return NULL;
+}
+
+
+
 Message* Message::createMessage( const Message::Type type )
 {
   Message* message = NULL;
@@ -56,9 +84,9 @@ Message* Message::createMessage( const Message::Type type )
       message = new Message;
       message->type_ = type;
       break;
-
+    case Message::MSG_NICKNAME:
+      message = new NicknameMessage;
     default:
-//     message = new HelloMessage();
       break;
   }
 
@@ -70,6 +98,7 @@ Message* Message::createMessage( const Message::Type type )
   {
     Common::debug( "Could not create the message. Invalid type %d", type );
   }
+
   return message;
 }
 
@@ -77,17 +106,14 @@ Message* Message::createMessage( const Message::Type type )
 
 void* Message::data( int& size ) const
 {
-  MessageContents rawData;
+  MessageHeader rawData;
   rawData.size = 0; // No extra fields
 
   switch( type_ )
   {
     case Message::MSG_HELLO:
-      strcpy( rawData.command, COMMAND_HELLO );
-      break;
-
     case Message::MSG_BYE:
-      strcpy( rawData.command, COMMAND_BYE );
+      strcpy( rawData.command, command( type_ ) );
       break;
 
     default:
@@ -95,7 +121,7 @@ void* Message::data( int& size ) const
       return NULL;
   }
 
-  size = sizeof( MessageContents );
+  size = sizeof( MessageHeader );
   void* buffer = malloc( size );
   memcpy( buffer, &rawData, size );
 
@@ -103,8 +129,15 @@ void* Message::data( int& size ) const
 }
 
 
+bool Message::parseData( const void*, int )
+{
+  // Does nothing: class Message has no extra fields
+  return true;
+}
 
-Message* Message::parseData( const void* buffer, int size )
+
+
+Message* Message::parseHeader( const void* buffer, int size )
 {
   if( size < 1 )
   {
@@ -112,31 +145,51 @@ Message* Message::parseData( const void* buffer, int size )
     return NULL;
   }
 
-  int messageDataSize = sizeof( MessageContents );
+  int messageHeaderSize = sizeof( MessageHeader );
 
   // Received data is shorter than the minimum message size, cannot be a valid message
-  if( size < messageDataSize )
+  if( size < messageHeaderSize )
   {
-    Common::error( "Received invalid message! Minimum size is %d, but received %d", messageDataSize, size );
+    Common::error( "Received invalid message! Minimum size is %d, but received %d", messageHeaderSize, size );
     return NULL;
   }
 
-  MessageContents messageData;
-  memcpy( &messageData, buffer, messageDataSize );
+  MessageHeader messageData;
+  memcpy( &messageData, buffer, messageHeaderSize );
 
   // Identify the command
   Message::Type type = Message::MSG_INVALID;
-  if     ( strcmp( messageData.command, COMMAND_HELLO ) == 0 ) type = Message::MSG_HELLO;
-  else if( strcmp( messageData.command, COMMAND_BYE   ) == 0 ) type = Message::MSG_BYE;
-  // TODO Add the rest of the commands
-  else
+  for( int i = Message::MSG_INVALID + 1; i < Message::MSG_MAX; i++ )
+  {
+    Message::Type current = static_cast<Type>( i );
+    if( strcmp( messageData.command, command( current ) ) == 0 )
+    {
+      type = current;
+      break;
+    }
+  }
+
+  if( type == Message::MSG_INVALID )
   {
     Common::error( "Received invalid command \"%s\"!", messageData.command );
 
     return NULL;
   }
 
-  return createMessage( type );
+  Message* newMessage = createMessage( type );
+
+  char* dataBuffer = reinterpret_cast<char*>( const_cast<void*>( buffer ) );
+  dataBuffer += messageHeaderSize;
+
+  // Parse the message-specific data
+  bool isOk = newMessage->parseData( dataBuffer, size - messageHeaderSize );
+  if( ! isOk )
+  {
+    delete newMessage;
+    newMessage = NULL;
+  }
+
+  return newMessage;
 }
 
 

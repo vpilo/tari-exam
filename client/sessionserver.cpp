@@ -11,8 +11,10 @@
 #include "sessionserver.h"
 
 #include "common.h"
-#include "message.h"
 #include "client.h"
+
+#include "message.h"
+#include "nicknamemessage.h"
 
 
 
@@ -43,6 +45,13 @@ void SessionServer::disconnect()
 {
   sendMessage( Message::createMessage( Message::MSG_BYE ) );
   SessionBase::disconnect();
+}
+
+
+
+void SessionServer::setNickName( const char* nickName )
+{
+  sendMessage( new NicknameMessage( nickName ) );
 }
 
 
