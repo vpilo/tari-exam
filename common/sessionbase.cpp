@@ -67,9 +67,11 @@ void* SessionBase::pollForData( void* thisPointer )
   sigset_t set;
   pthread_sigmask( SIG_SETMASK, &set, NULL );
 
+  bool hasError = false;
+
   // Start the data transfer loop:
   // end when we have to disconnect and all pending messages have been sent
-  while( ! self->disconnectionFlag_ || self->sendingQueue_.size() > 0 )
+  while( ! hasError && ( ! self->disconnectionFlag_ || self->sendingQueue_.size() > 0 ) )
   {
 /*
     Common::debug( "** pollForData(): %s; %d in send queue; %d in receive queue",
@@ -87,8 +89,6 @@ void* SessionBase::pollForData( void* thisPointer )
     {
       watched.events = POLLIN;
     }
-
-    bool hasError = false;
 
     int ready = ppoll( &watched, 1, &timeout, &set );
 
