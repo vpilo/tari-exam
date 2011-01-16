@@ -34,7 +34,7 @@ public:
 
     void addSession( int newSocket );
     void removeSession( SessionClient* client );
-    void changeSessionState( SessionClient* client, Message::Type messageType );
+    void checkSessionStateChange( SessionClient* client, Message::Type messageType );
 
 
 private:

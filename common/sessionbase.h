@@ -52,6 +52,14 @@ class SessionBase
   private:
 
     /**
+     * Identifies a received message within the data buffer.
+     *
+     * @return
+     *  An instance of the proper Message subclass; or NULL in case of an error
+     */
+    Message* parseMessage();
+
+    /**
      * Read some data from the socket.
      * @return true on error
      */
@@ -65,6 +73,10 @@ class SessionBase
 
 
   private:
+
+    char* buffer_;
+
+    int bufferOffset_;
 
     bool disconnectionFlag_;
 

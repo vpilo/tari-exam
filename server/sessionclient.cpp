@@ -36,17 +36,19 @@ void SessionClient::availableMessages()
   Message* message;
   while( ( message = receiveMessage() ) != NULL )
   {
+    server_->checkSessionStateChange( this, message->type() );
+    // TODO Do something else on received messages
+    /*
     switch( message->type() )
     {
       case Message::MSG_HELLO:
       case Message::MSG_BYE:
-        server_->changeSessionState( this, message->type() );
         break;
 
       default:
-        Common::error( "Unhandled message type %d received", message->type() );
         break;
     }
+    */
     delete message;
   }
 

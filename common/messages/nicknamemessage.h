@@ -34,16 +34,12 @@
 
 class NicknameMessage : public Message
 {
-  friend class Message; // Class Message can create the private NicknameMessage instances
-
-  private:
-    NicknameMessage();
-    virtual ~NicknameMessage();
-
 
   public:
 
+    NicknameMessage();
     NicknameMessage( const char* nickName );
+    virtual ~NicknameMessage();
 
     void setNickName( const char* newNickName );
 
@@ -61,7 +57,7 @@ class NicknameMessage : public Message
      * @return
      *  Raw data buffer with the message, or NULL on error
      */
-    virtual void* data( int& size ) const;
+    virtual char* data( int& size ) const;
 
 
   private:
@@ -83,7 +79,7 @@ class NicknameMessage : public Message
      */
     struct NicknameMessageContents
     {
-      Message::MessageHeader header;
+      MessageHeader header;
       char nickname[ NICKNAME_FIELD_SIZE ];
     };
 

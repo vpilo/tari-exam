@@ -85,7 +85,7 @@ void Server::addSession( int newSocket )
 
 
 
-void Server::changeSessionState( SessionClient* client, Message::Type messageType )
+void Server::checkSessionStateChange( SessionClient* client, Message::Type messageType )
 {
   SessionData* current = findSession( client );
 

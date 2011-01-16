@@ -40,7 +40,7 @@ NicknameMessage::~NicknameMessage()
 
 
 
-void* NicknameMessage::data( int& size ) const
+char* NicknameMessage::data( int& size ) const
 {
   if( type() != Message::MSG_NICKNAME )
   {
@@ -53,7 +53,7 @@ void* NicknameMessage::data( int& size ) const
   strncpy( data.nickname, nickname_, NICKNAME_FIELD_SIZE );
 
   size = sizeof( NicknameMessageContents );
-  void* buffer = malloc( size );
+  char* buffer = static_cast<char*>( malloc( size ) );
   memcpy( buffer, &data, size );
 
   Common::debug( "Made nickname message buffer (%d bytes)", size );

@@ -13,7 +13,8 @@
 #include "common.h"
 #include "client.h"
 
-#include "message.h"
+#include "byemessage.h"
+#include "hellomessage.h"
 #include "nicknamemessage.h"
 
 
@@ -22,7 +23,7 @@ SessionServer::SessionServer( Client* parent, const int socket )
 : SessionBase( socket )
 , client_( parent )
 {
-  sendMessage( Message::createMessage( Message::MSG_HELLO ) );
+  sendMessage( new HelloMessage() );
 }
 
 
@@ -43,7 +44,7 @@ void SessionServer::availableMessages()
 
 void SessionServer::disconnect()
 {
-  sendMessage( Message::createMessage( Message::MSG_BYE ) );
+  sendMessage( new ByeMessage() );
   SessionBase::disconnect();
 }
 

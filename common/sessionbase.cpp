@@ -12,6 +12,7 @@
 
 #include "common.h"
 #include "message.h"
+#include "protocol.h"
 
 #include <netinet/in.h>
 #include <sys/poll.h>
@@ -22,14 +23,18 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <hellomessage.h>
+#include <byemessage.h>
+#include <nicknamemessage.h>
 
 
 
 SessionBase::SessionBase( const int socket )
-: disconnectionFlag_( false )
+: bufferOffset_( 0 )
+, disconnectionFlag_( false )
 , socket_( socket )
 {
-
+ buffer_ = static_cast<char*>( malloc( MAX_MESSAGE_SIZE ) );
 }
 
 
@@ -37,6 +42,8 @@ SessionBase::SessionBase( const int socket )
 SessionBase::~SessionBase()
 {
   close( socket_ );
+
+  free( buffer_ );
 }
 
 
@@ -44,6 +51,82 @@ SessionBase::~SessionBase()
 void SessionBase::disconnect()
 {
   disconnectionFlag_ = true;
+}
+
+
+
+Message* SessionBase::parseMessage()
+{
+  int messageHeaderSize = sizeof( MessageHeader );
+
+  MessageHeader messageData;
+  memcpy( &messageData, buffer_, messageHeaderSize );
+
+  // Identify the command
+  Message::Type type = Message::MSG_INVALID;
+  for( int i = Message::MSG_INVALID + 1; i < Message::MSG_MAX; i++ )
+  {
+    Message::Type current = static_cast<Message::Type>( i );
+    if( strcmp( messageData.command, Message::command( current ) ) == 0 )
+    {
+      type = current;
+      break;
+    }
+  }
+
+  // Validate the header fields
+  if( type == Message::MSG_INVALID )
+  {
+    Common::error( "Received invalid command \"%s\"!", messageData.command );
+    return NULL;
+  }
+  if( ( messageHeaderSize + messageData.size ) > MAX_MESSAGE_SIZE )
+  {
+    Common::error( "Received invalid message data size \"%d\"!", messageData.size );
+    return NULL;
+  }
+
+  // Make the message and pass to it only the message-specific data
+  char* dataBuffer = buffer_ + messageHeaderSize;
+
+  Message* message = NULL;
+
+  switch( type )
+  {
+    // Simple messages don't need a specialized class
+    case Message::MSG_HELLO:
+      message = new HelloMessage();
+      break;
+    case Message::MSG_BYE:
+      message = new ByeMessage();
+      break;
+    case Message::MSG_NICKNAME:
+      message = new NicknameMessage();
+      break;
+    default:
+      Common::debug( "Could not create the message. Invalid type %d", type );
+      break;
+  }
+
+  bool isOk = message->parseData( dataBuffer, messageData.size );
+  if( ! isOk )
+  {
+    delete message;
+    return NULL;
+  }
+
+  // Message is OK, move the rest of the buffer data at the start of the buffer
+  // so the next one can be read
+
+  bufferOffset_ += messageData.size;
+  int remainder = MAX_MESSAGE_SIZE - bufferOffset_;
+  memcpy( buffer_, buffer_ + bufferOffset_, remainder );
+  bufferOffset_ = 0;
+
+  // and zero out the remainder
+  memset( buffer_ + MAX_MESSAGE_SIZE - remainder, '\0', remainder );
+
+  return message;
 }
 
 
@@ -78,6 +161,10 @@ void* SessionBase::pollForData( void* thisPointer )
                    self->disconnectionFlag_ ? "Exiting" : "Running",
                    self->sendingQueue_.size(),
                    self->receivingQueue_.size() );
+    Common::debug( "Used buffer:" );
+    Common::printData( self->buffer_, self->bufferOffset_ );
+    Common::debug( "Free buffer:" );
+    Common::printData( self->buffer_ + self->bufferOffset_, MAX_MESSAGE_SIZE - self->bufferOffset_ );
 */
 
     // If there is nothing to send, don't poll for the availability of a write operation
@@ -140,28 +227,38 @@ void* SessionBase::pollForData( void* thisPointer )
 
 bool SessionBase::readData()
 {
-  Common::debug( "Session 0x%X: Receiving message...", this );
+  Common::debug( "Session 0x%X: Receiving data...", this );
 
-  void* buffer = malloc( MAX_MESSAGE_SIZE );
-
-  int readBytes = recv( socket_, buffer, MAX_MESSAGE_SIZE, 0 );
+  int readBytes = recv( socket_,
+                        buffer_ + bufferOffset_,
+                        MAX_MESSAGE_SIZE - bufferOffset_,
+                        0 );
 
   if( readBytes == 0 )
   {
-    free( buffer );
     Common::debug( "Session 0x%X: Socket was closed", this );
     return true;
   }
   else if( readBytes < 0 )
   {
-    free( buffer );
     Common::error( "Session 0x%X: error: Socket is closed", this );
     return true;
   }
 
-  Common::printData( (const char*)buffer, readBytes );
+  bufferOffset_ += readBytes;
 
-  Message* message = Message::parseHeader( buffer, readBytes );
+  // Received data is shorter than the minimum message size, cannot be a valid message
+  int messageHeaderSize = sizeof( MessageHeader );
+  if( bufferOffset_ < messageHeaderSize )
+  {
+    Common::debug( "Not enough data yet. Minimum size is %d bytes, received only %d", messageHeaderSize, bufferOffset_ );
+    return false;
+  }
+
+  Common::printData( buffer_, bufferOffset_ );
+
+  Message* message = parseMessage();
+
   if( message != NULL && message->type() != Message::MSG_INVALID )
   {
     receivingQueue_.push_back( message );
@@ -169,12 +266,11 @@ bool SessionBase::readData()
   }
   else
   {
+    // Invalid message
     delete message;
-    // Disconnect the peer
     return true;
   }
 
-  free( buffer );
   return false;
 }
 
@@ -217,12 +313,12 @@ bool SessionBase::writeData()
   sendingQueue_.pop_front();
 
   int size = -1;
-  void* buffer = message->data( size );
+  char* sendBuffer = message->data( size );
 
-  Common::printData( (const char*)buffer, size );
-  send( socket_, buffer, size, 0 );
+  Common::printData( sendBuffer, size );
+  send( socket_, sendBuffer, size, 0 );
 
-  free( buffer );
+  free( sendBuffer );
   delete message;
 
   return false;

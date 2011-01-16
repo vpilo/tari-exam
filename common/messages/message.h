@@ -11,27 +11,14 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include "protocol.h"
 
-/**
- * @def COMMAND_SIZE
- *
- * Size of the command message in bytes.
- *
- * Add one for the terminating NULL character.
- */
-#define COMMAND_SIZE  6
-
-
-/**
- * @def MAX_MESSAGE_SIZE
- *
- * A message can be long at most this long.
- */
-#define MAX_MESSAGE_SIZE   5000
 
 
 class Message
 {
+  // Allow SessionBase to access createMessage and command()
+  friend class SessionBase;
 
   public:
 
@@ -50,43 +37,11 @@ class Message
 
 
   public:
+
     virtual ~Message();
     virtual bool operator==( const Message& other ) const;
 
-    /**
-     * Convert the message contents into raw data.
-     *
-     * Use this to create packets to send over the network.
-     * Subclasses can override this method to implement custom packets.
-     *
-     * @note The programmer is responsible of free()ing the buffer after its use.
-     * @param size
-     *  This will be set to the amount of bytes used by the raw data.
-     * @return
-     *  Raw data buffer with the message, or NULL on error
-     */
-    virtual void* data( int& size ) const;
-
     Type type() const;
-
-
-  public:
-
-    /**
-     * Identifies a received message within a data buffer.
-     *
-     * @return
-     *  An instance of the proper Message subclass; or NULL in case of an error
-     */
-    static Message* parseHeader( const void* buffer, int size );
-
-    /**
-     * Creates a message of a certain type.
-     *
-     * @return
-     *  An instance of the proper Message subclass; or NULL in case of an error
-     */
-    static Message* createMessage( const Type type );
 
 
   protected:
@@ -104,24 +59,25 @@ class Message
     static const char* command( Message::Type type );
 
     /**
+     * Convert the message contents into raw data.
+     *
+     * Use this to create packets to send over the network.
+     * Subclasses can override this method to implement custom packets.
+     *
+     * @note The programmer is responsible of free()ing the buffer after its use.
+     * @param size
+     *  This will be set to the amount of bytes used by the raw data.
+     * @return
+     *  Raw data buffer with the message, or NULL on error
+     */
+    virtual char* data( int& size ) const;
+
+    /**
      * Analyzes a data buffer to retrieve the specific message type's data.
      *
      * @return false on error (invalid data in the buffer)
      */
     virtual bool parseData( const void* buffer, int size );
-
-
-  protected:
-
-    /**
-     * Container for the common message data
-     */
-    struct MessageHeader
-    {
-      // All commands are of the same size
-      char command[ COMMAND_SIZE ];
-      int size;
-    };
 
 
   private:
