@@ -25,6 +25,7 @@ class Message
     enum Type
     {
       MSG_INVALID
+    , MSG_STATUS
     , MSG_HELLO
     , MSG_NICKNAME
     , MSG_BYE

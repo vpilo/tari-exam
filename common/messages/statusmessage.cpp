@@ -17,6 +17,14 @@
 
 
 
+StatusMessage::StatusMessage()
+: Message( Message::MSG_STATUS )
+, statusCode_( Errors::Status_Ok )
+{
+}
+
+
+
 StatusMessage::StatusMessage( const Errors::StatusCode statusCode )
 : Message( Message::MSG_STATUS )
 , statusCode_( statusCode )
@@ -73,6 +81,7 @@ bool StatusMessage::parseData( const char* buffer, int size )
   // Clamp the buffer contents into the int size
   statusCode_ = *( reinterpret_cast<const Errors::StatusCode*>( buffer ) );
 
+  Common::debug( "Read status code: %d", statusCode_ );
   return true;
 }
 

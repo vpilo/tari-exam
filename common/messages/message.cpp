@@ -56,6 +56,7 @@ const char* Message::command( Message::Type type )
      case Message::MSG_HELLO:          return "HELLO";
      case Message::MSG_NICKNAME:       return "NICK";
      case Message::MSG_BYE:            return "BYE";
+     case Message::MSG_STATUS:         return "STATE";
      case Message::MSG_CHAT:           return "MSG";
      case Message::MSG_FILE_REQUEST:   return "FTQ";
      case Message::MSG_FILE_RESPONSE:  return "FTA";

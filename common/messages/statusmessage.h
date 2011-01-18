@@ -22,6 +22,7 @@ class StatusMessage : public Message
 
   public:
 
+    StatusMessage();
     StatusMessage( const Errors::StatusCode statusCode );
     virtual ~StatusMessage();
 

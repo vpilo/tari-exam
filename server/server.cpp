@@ -78,7 +78,9 @@ void Server::addSession( int newSocket )
   newSession->state = CLIENT_STATE_START;
 
   // Assign a default unique name to the client
-  sprintf( newSession->nickName, "Client %d", connectionsCounter_ );
+  char nickName[ MAX_NICKNAME_SIZE ];
+  sprintf( nickName, "User %d", connectionsCounter_ );
+  newSession->client->setNickName( nickName );
 
   pthread_create( &newSession->thread, NULL, &SessionClient::pollForData, newSession->client );
 
@@ -86,7 +88,7 @@ void Server::addSession( int newSocket )
   sessions_[ newSession->client ] = newSession;
   pthread_mutex_unlock( &accessMutex_ );
 
-  Common::debug( "Session \"%s\" registered, %lu active", newSession->nickName, sessions_.size() );
+  Common::debug( "Session \"%s\" registered, %lu active", nickName, sessions_.size() );
 }
 
 
@@ -136,18 +138,18 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
 
   if( std::find( expectedStates.begin(), expectedStates.end(), current->state ) == expectedStates.end() )
   {
-    Common::error( "Session \"%s\" sent a wrong state message of type %d", current->nickName, messageType );
+    Common::error( "Session \"%s\" sent a wrong state message of type %d", current->client->nickName(), messageType );
     client->disconnect();
     return;
   }
 
   current->state = nextState;
-  Common::debug( "Session \"%s\" changed state to %d", current->nickName, nextState );
+  Common::debug( "Session \"%s\" changed state to %d", current->client->nickName(), nextState );
 }
 
 
 
-void Server::clientChangedNickName( SessionClient* client, const char* newNickName )
+bool Server::clientChangedNickName( SessionClient* client, const char* newNickName )
 {
   SessionData* current = findSession( client );
   if( ! current )
@@ -155,9 +157,20 @@ void Server::clientChangedNickName( SessionClient* client, const char* newNickNa
     Common::fatal( "Received a message from unknown session 0x%X!", client );
   }
 
-  Common::debug( "Session \"%s\" is now known as \"%s\"", current->nickName, newNickName );
+  // Check if the new name is unique
+  std::map<SessionClient*,SessionData*>::iterator it;
+  for( it = sessions_.begin(); it != sessions_.end(); it++ )
+  {
+    const SessionData* session = (*it).second;
+    if( strcasecmp( newNickName, session->client->nickName() ) == 0 )
+    {
+      return false;
+    }
+  }
 
-  strncpy( current->nickName, newNickName, MAX_NICKNAME_SIZE );
+  Common::debug( "Session \"%s\" is now known as \"%s\"", current->client->nickName(), newNickName );
+
+  return true;
 }
 
 
@@ -240,7 +253,7 @@ void Server::removeSession( SessionClient* client )
 
   sessions_.erase( client );
 
-  Common::debug( "Session \"%s\" ended, %lu remaining", current->nickName, sessions_.size() );
+  Common::debug( "Session \"%s\" ended, %lu remaining", current->client->nickName(), sessions_.size() );
 
   delete current;
 

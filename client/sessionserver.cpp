@@ -16,6 +16,9 @@
 #include "byemessage.h"
 #include "hellomessage.h"
 #include "nicknamemessage.h"
+#include "statusmessage.h"
+
+#include "string.h"
 
 
 
@@ -37,7 +40,45 @@ SessionServer::~SessionServer()
 
 void SessionServer::availableMessages()
 {
+  Message* message;
+  while( ( message = receiveMessage() ) != NULL )
+  {
+    switch( message->type() )
+    {
+      case Message::MSG_STATUS:
+      {
+        StatusMessage* statusMessage = dynamic_cast<StatusMessage*>( message );
+        Common::error( "The server reports status code %d", statusMessage->statusCode() );
 
+        switch( statusMessage->statusCode() )
+        {
+          case Errors::Status_NickNameAlreadyRegistered:
+            // Keep the original nickname, the wanted one wasn't accepted
+            Common::error( "The nickname change wasn't accepted." );
+            break;
+
+          default:
+            break;
+        }
+        break;
+      }
+
+      case Message::MSG_NICKNAME:
+      {
+        NicknameMessage* nickNameMessage = dynamic_cast<NicknameMessage*>( message );
+
+        // We'll take whatever nickname the server gives us
+        strncpy( nickName_, nickNameMessage->nickName(), MAX_NICKNAME_SIZE - 1 );
+        Common::debug( "Name changed to %s", nickName_ );
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    delete message;
+  }
 }
 
 

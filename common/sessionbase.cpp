@@ -14,6 +14,11 @@
 #include "message.h"
 #include "protocol.h"
 
+#include "hellomessage.h"
+#include "byemessage.h"
+#include "nicknamemessage.h"
+#include "statusmessage.h"
+
 #include <netinet/in.h>
 #include <sys/poll.h>
 #include <errno.h>
@@ -23,9 +28,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <hellomessage.h>
-#include <byemessage.h>
-#include <nicknamemessage.h>
 
 
 
@@ -102,6 +104,9 @@ Message* SessionBase::parseMessage()
       break;
     case Message::MSG_NICKNAME:
       message = new NicknameMessage();
+      break;
+    case Message::MSG_STATUS:
+      message = new StatusMessage();
       break;
     default:
       Common::debug( "Could not create the message. Invalid type %d", type );

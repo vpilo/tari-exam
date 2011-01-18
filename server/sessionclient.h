@@ -31,6 +31,9 @@ class SessionClient : public SessionBase
     SessionClient( Server* parent, const int socket );
     virtual ~SessionClient();
 
+    const char* nickName() const;
+    void setNickName( const char* newNickName );
+
 
   private:
 
@@ -38,6 +41,8 @@ class SessionClient : public SessionBase
 
 
   private:
+
+    char nickName_[ MAX_NICKNAME_SIZE ];
 
     /// Pointer to the parent server
     Server* server_;

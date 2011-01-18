@@ -48,6 +48,8 @@ class SessionServer : public SessionBase
     /// Pointer to the parent client
     Client* client_;
 
+    char nickName_[ MAX_NICKNAME_SIZE ];
+
 
 };
 

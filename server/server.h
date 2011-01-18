@@ -37,7 +37,7 @@ public:
     void removeSession( SessionClient* client );
     void checkSessionStateChange( SessionClient* client, Message::Type messageType );
 
-    void clientChangedNickName( SessionClient* client, const char* newNickName );
+    bool clientChangedNickName( SessionClient* client, const char* newNickName );
 
 
 private:
@@ -56,7 +56,6 @@ private:
     SessionClient* client;
     pthread_t thread;
     ClientState state;
-    char nickName[ MAX_NICKNAME_SIZE ];
   };
 
 

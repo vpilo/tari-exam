@@ -110,6 +110,9 @@ void Client::run()
 {
   // Ask the nickname to the client
   // TODO Actually ask it
+
+  sleep( 2 );
+
   connection_->setNickName( "Valerio" );
 
   sleep( 1 );
