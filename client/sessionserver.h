@@ -32,9 +32,7 @@ class SessionServer : public SessionBase
     virtual ~SessionServer();
     virtual void disconnect();
 
-
-  public:
-
+    void chat( const char* message );
     void setNickName( const char* nickName );
 
 

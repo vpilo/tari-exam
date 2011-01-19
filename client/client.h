@@ -34,6 +34,8 @@ public:
   Errors::ErrorCode initialize( const in_addr serverIp, const int serverPort );
 
   void connectionClosed( SessionServer* connection );
+
+  void gotChatMessage( const char* sender, const char* message );
   void run();
 
 private:

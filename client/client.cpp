@@ -70,6 +70,13 @@ void Client::connectionClosed( SessionServer* connection )
 
 
 
+void Client::gotChatMessage( const char* sender, const char* message )
+{
+  Common::debug( "<%s> %s", sender, message );
+}
+
+
+
 Errors::ErrorCode Client::initialize( const in_addr serverIp, const int serverPort )
 {
   socket_ = socket( AF_INET, SOCK_STREAM, 0 );
@@ -113,9 +120,15 @@ void Client::run()
 
   sleep( 2 );
 
-  connection_->setNickName( "Valerio" );
+//   connection_->setNickName( "Valerio" );
 
-  sleep( 1 );
+//   sleep( 1 );
+
+  const char* msg = "FUCK YEAH TEST!";
+  connection_->chat( msg );
+  Common::debug( "<me> %s", msg );
+
+  sleep( 3 );
 
   // If we've been disconnected, the pointer will be null
   if( connection_ )

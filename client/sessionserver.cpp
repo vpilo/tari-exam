@@ -14,6 +14,7 @@
 #include "client.h"
 
 #include "byemessage.h"
+#include "chatmessage.h"
 #include "hellomessage.h"
 #include "nicknamemessage.h"
 #include "statusmessage.h"
@@ -73,12 +74,28 @@ void SessionServer::availableMessages()
         break;
       }
 
+      case Message::MSG_CHAT:
+      {
+        ChatMessage* chatMessage = dynamic_cast<ChatMessage*>( message );
+
+        Common::debug( "Got message by '%s': %s", chatMessage->sender(), chatMessage->message() );
+        client_->gotChatMessage( chatMessage->sender(), chatMessage->message() );
+        break;
+      }
+
       default:
         break;
     }
 
     delete message;
   }
+}
+
+
+
+void SessionServer::chat( const char* message )
+{
+  sendMessage( new ChatMessage( message ) );
 }
 
 

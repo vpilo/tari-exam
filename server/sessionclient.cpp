@@ -12,9 +12,12 @@
 
 #include "common.h"
 #include "message.h"
+#include "server.h"
+
 #include "statusmessage.h"
 #include "nicknamemessage.h"
-#include "server.h"
+#include "chatmessage.h"
+
 #include <string.h>
 
 
@@ -46,34 +49,48 @@ void SessionClient::availableMessages()
       case Message::MSG_HELLO:
       {
         // Send the client its initial nickname
-        setNickName( nickName() );
+        sendMessage( new NicknameMessage( nickName_ ) );
         break;
       }
+
       case Message::MSG_NICKNAME:
       {
-        Errors::StatusCode result;
         NicknameMessage* nickNameMessage = dynamic_cast<NicknameMessage*>( message );
         if( ! server_->clientChangedNickName( this, nickNameMessage->nickName() ) )
         {
           // The nickname could not be changed, report the problem to the client
-          result = Errors::Status_NickNameAlreadyRegistered;
-          setNickName( nickName() );
+          sendMessage( new StatusMessage( Errors::Status_NickNameAlreadyRegistered ) );
         }
         else
         {
           // Change the nickname
-          result = Errors::Status_Ok;
           setNickName( nickNameMessage->nickName() );
+          sendMessage( new NicknameMessage( nickName_ ) );
         }
 
-        sendMessage( new StatusMessage( result ) );
         break;
       }
+
       case Message::MSG_STATUS:
       {
         StatusMessage* statusMessage = dynamic_cast<StatusMessage*>( message );
         Common::debug( "The client reports status code %d", statusMessage->statusCode() );
-        /// TODO Parse the error message
+
+        if( statusMessage->statusCode() != Errors::Status_Ok )
+        {
+          /// TODO Parse the error message
+          Common::error( "Error!" );
+        }
+        break;
+      }
+
+      case Message::MSG_CHAT:
+      {
+        ChatMessage* chatMessage = dynamic_cast<ChatMessage*>( message );
+        if( ! server_->clientSentChatMessage( this, chatMessage->message() ) )
+        {
+          sendMessage( new StatusMessage( Errors::Status_ChattingAlone ) );
+        }
         break;
       }
 
@@ -97,7 +114,6 @@ const char* SessionClient::nickName() const
 void SessionClient::setNickName( const char* newNickName )
 {
   strncpy( nickName_, newNickName, MAX_NICKNAME_SIZE - 1 );
-  sendMessage( new NicknameMessage( nickName_ ) );
 }
 
 

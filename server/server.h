@@ -38,6 +38,7 @@ public:
     void checkSessionStateChange( SessionClient* client, Message::Type messageType );
 
     bool clientChangedNickName( SessionClient* client, const char* newNickName );
+    bool clientSentChatMessage( SessionClient* client, const char* chatMessage );
 
 
 private:

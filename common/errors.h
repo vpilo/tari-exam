@@ -32,6 +32,7 @@ class Errors
     enum StatusCode
     {
       Status_Ok                        = 200
+    , Status_ChattingAlone
     , Status_NickNameAlreadyRegistered
     };
 

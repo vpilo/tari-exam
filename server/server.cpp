@@ -10,9 +10,10 @@
 
 #include "server.h"
 
-#include "sessionclient.h"
+#include "chatmessage.h"
 #include "common.h"
 #include "errors.h"
+#include "sessionclient.h"
 
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -161,14 +162,51 @@ bool Server::clientChangedNickName( SessionClient* client, const char* newNickNa
   std::map<SessionClient*,SessionData*>::iterator it;
   for( it = sessions_.begin(); it != sessions_.end(); it++ )
   {
-    const SessionData* session = (*it).second;
-    if( strcasecmp( newNickName, session->client->nickName() ) == 0 )
+    const SessionClient* peer = (*it).first;
+    if( strcasecmp( newNickName, peer->nickName() ) == 0 )
     {
       return false;
     }
   }
 
   Common::debug( "Session \"%s\" is now known as \"%s\"", current->client->nickName(), newNickName );
+
+  return true;
+}
+
+
+
+bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessage )
+{
+  SessionData* current = findSession( client );
+  if( ! current )
+  {
+    Common::fatal( "Received a message from unknown session 0x%X!", client );
+  }
+
+  // The user is alone by him/herself in chat
+  if( sessions_.size() == 1 )
+  {
+    return false;
+  }
+
+  ChatMessage* message = new ChatMessage( chatMessage );
+  message->setSender( client->nickName() );
+
+  // Send the same message to everybody but the sender
+  std::map<SessionClient*,SessionData*>::iterator it;
+  for( it = sessions_.begin(); it != sessions_.end(); it++ )
+  {
+    const SessionClient* peer = (*it).first;
+
+    // Don't send back the same message
+    if( peer == client )
+    {
+      continue;
+    }
+
+    client->sendMessage( message );
+  }
 
   return true;
 }
