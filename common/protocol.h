@@ -27,7 +27,7 @@
  *
  * A message can be long at most this long.
  */
-#define MAX_MESSAGE_SIZE   256
+#define MAX_MESSAGE_SIZE   1024
 
 
 /**
@@ -36,6 +36,14 @@
  * Maximum length of the user nickname in bytes.
  */
 #define MAX_NICKNAME_SIZE  36
+
+
+/**
+ * @def MAX_CHATMESSAGE_SIZE
+ *
+ * A text message can be long at most this long.
+ */
+#define MAX_CHATMESSAGE_SIZE   1024
 
 
 /**

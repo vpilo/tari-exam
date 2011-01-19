@@ -20,7 +20,7 @@
 NicknameMessage::NicknameMessage()
 : Message( Message::MSG_NICKNAME )
 {
-  nickname_[ 0 ] = '\0';
+  payload_.nickname[ 0 ] = '\0';
 }
 
 
@@ -40,55 +40,44 @@ NicknameMessage::~NicknameMessage()
 
 
 
-char* NicknameMessage::data( int& size ) const
+bool NicknameMessage::fromRawBytes( const char* buffer, int size )
 {
-  if( type() != Message::MSG_NICKNAME )
+  int payloadSize = sizeof( Payload );
+  if( size != payloadSize )
   {
-    Common::fatal( "Invalid nickname message!" );
-  }
-
-  NicknameMessageContents data;
-  strcpy( data.header.command, command( type() ) );
-  data.header.size = NICKNAME_FIELD_SIZE;
-  strncpy( data.nickname, nickname_, NICKNAME_FIELD_SIZE );
-
-  size = sizeof( NicknameMessageContents );
-  char* buffer = static_cast<char*>( malloc( size ) );
-  memcpy( buffer, &data, size );
-
-  Common::debug( "Made nickname message buffer (%d bytes)", size );
-  return buffer;
-}
-
-
-
-const char* NicknameMessage::nickName() const
-{
-  return nickname_;
-}
-
-
-
-bool NicknameMessage::parseData( const char* buffer, int size )
-{
-  // We only have one field of specific size
-  if( size != NICKNAME_FIELD_SIZE )
-  {
-    Common::error( "Invalid buffer length: got %d, expected %d!", size, NICKNAME_FIELD_SIZE );
+    Common::error( "Invalid buffer length: got %d, expected %d!", size, payloadSize );
     return false;
   }
 
-  strncpy( nickname_, buffer, size );
+  memcpy( &payload_, buffer, payloadSize );
 
   return true;
 }
 
 
 
+const char* NicknameMessage::nickName() const
+{
+  return payload_.nickname;
+}
+
+
+
 void NicknameMessage::setNickName( const char* newNickName )
 {
-  strncpy( nickname_, newNickName, MAX_NICKNAME_SIZE );
-  nickname_[ NICKNAME_FIELD_SIZE - 1 ] = '\0';
+  strncpy( payload_.nickname, newNickName, MAX_NICKNAME_SIZE );
+  payload_.nickname[ NICKNAME_FIELD_SIZE - 1 ] = '\0';
+}
+
+
+
+char* NicknameMessage::toRawBytes( int& size ) const
+{
+  size = sizeof( Payload );
+  char* buffer = static_cast<char*>( malloc( size ) );
+  memcpy( buffer, &payload_, size );
+
+  return buffer;
 }
 
 

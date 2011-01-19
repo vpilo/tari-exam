@@ -26,6 +26,8 @@ class SessionBase
 
     virtual void disconnect();
 
+    void sendMessage( Message* message );
+
 
   public:
 
@@ -35,18 +37,16 @@ class SessionBase
   protected:
 
     /**
+     * New data is incoming and may be processed.
+     */
+    virtual void availableMessages() = 0;
+
+    /**
      * Take a message from the received message list.
      *
      * @return The next message to process, or NULL if there are none.
      */
     Message* receiveMessage();
-
-    void sendMessage( Message* message );
-
-    /**
-     * New data is incoming and may be processed.
-     */
-    virtual void availableMessages() = 0;
 
 
   private:

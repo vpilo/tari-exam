@@ -19,16 +19,16 @@
 
 StatusMessage::StatusMessage()
 : Message( Message::MSG_STATUS )
-, statusCode_( Errors::Status_Ok )
 {
+  payload_.status = Errors::Status_Ok;
 }
 
 
 
 StatusMessage::StatusMessage( const Errors::StatusCode statusCode )
 : Message( Message::MSG_STATUS )
-, statusCode_( statusCode )
 {
+  payload_.status = statusCode;
 }
 
 
@@ -40,49 +40,40 @@ StatusMessage::~StatusMessage()
 
 
 
-char* StatusMessage::data( int& size ) const
-{
-  if( type() != Message::MSG_STATUS )
-  {
-    Common::fatal( "Invalid status message!" );
-  }
-
-  StatusMessageContents data;
-  strcpy( data.header.command, command( type() ) );
-  data.header.size = sizeof( int );
-  data.status = statusCode_;
-
-  size = sizeof( StatusMessageContents );
-  char* buffer = static_cast<char*>( malloc( size ) );
-  memcpy( buffer, &data, size );
-
-  Common::debug( "Made status message buffer (%d bytes)", size );
-  return buffer;
-}
-
-
-
 const Errors::StatusCode StatusMessage::statusCode() const
 {
-  return statusCode_;
+  return payload_.status;
 }
 
 
 
-bool StatusMessage::parseData( const char* buffer, int size )
+bool StatusMessage::fromRawBytes( const char* buffer, int size )
 {
-  // We only have one field of specific size
-  if( size != sizeof( int ) )
+  int payloadSize = sizeof( Payload );
+  if( size != payloadSize )
   {
-    Common::error( "Invalid buffer length: got %d, expected %d!", size, sizeof( int ) );
+    Common::error( "Invalid buffer length: got %d, expected %d!", size, payloadSize );
     return false;
   }
 
-  // Clamp the buffer contents into the int size
-  statusCode_ = *( reinterpret_cast<const Errors::StatusCode*>( buffer ) );
+  memcpy( &payload_, buffer, payloadSize );
 
-  Common::debug( "Read status code: %d", statusCode_ );
+  Common::debug( "Read status code: %d", payload_.status );
+
   return true;
+}
+
+
+
+char* StatusMessage::toRawBytes( int& size ) const
+{
+  size = sizeof( Payload );
+  char* buffer = static_cast<char*>( malloc( size ) );
+  memcpy( buffer, &payload_, size );
+
+  Common::debug( "Made status message buffer (%d bytes)", size );
+
+  return buffer;
 }
 
 

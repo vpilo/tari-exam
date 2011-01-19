@@ -72,32 +72,15 @@ const char* Message::command( Message::Type type )
 
 
 
-char* Message::data( int& size ) const
+char* Message::toRawBytes( int& size ) const
 {
-  MessageHeader rawData;
-  rawData.size = 0; // No extra fields
-
-  switch( type_ )
-  {
-    case Message::MSG_HELLO:
-    case Message::MSG_BYE:
-      strcpy( rawData.command, command( type_ ) );
-      break;
-
-    default:
-      // We can't manage more complex message types
-      return NULL;
-  }
-
-  size = sizeof( MessageHeader );
-  char* buffer = static_cast<char*>( malloc( size ) );
-  memcpy( buffer, &rawData, size );
-
-  return buffer;
+  // Does nothing: class Message has no extra fields
+  size = 0;
+  return NULL;
 }
 
 
-bool Message::parseData( const char* buffer, int size )
+bool Message::fromRawBytes( const char*, int )
 {
   // Does nothing: class Message has no extra fields
   return true;

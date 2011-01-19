@@ -41,40 +41,30 @@ class NicknameMessage : public Message
   protected:
 
     /**
-     * Convert the message contents into raw data.
-     *
-     * Reimplements Message::data().
-     *
-     * @see Message::data()
-     * @param size
-     *  This will be set to the amount of bytes used by the raw data.
-     * @return
-     *  Raw data buffer with the message, or NULL on error
+     * Override, analyzes a data buffer to retrieve the specific message type's data.
+     * @see Overrides::fromRawBytes()
      */
-    virtual char* data( int& size ) const;
+    virtual bool fromRawBytes( const char* buffer, int size );
 
     /**
-     * Analyzes a data buffer to retrieve the specific message type's data.
-     *
-     * Reimplements Message::parseData().
-     *
-     * @see Message::parseData()
+     * Override, convert the message contents into raw data.
+     * @see Message::toRawBytes()
      */
-    virtual bool parseData( const char* buffer, int size );
+    virtual char* toRawBytes( int& size ) const;
 
 
   private:
 
-    /**
-     * Container for the nickname message data
-     */
-    struct NicknameMessageContents
+    /// Container for the nickname message data
+    struct Payload
     {
-      MessageHeader header;
       char nickname[ NICKNAME_FIELD_SIZE ];
     };
 
-    char nickname_[ NICKNAME_FIELD_SIZE ];
+    /// Internal message data
+    Payload payload_;
+
+
 };
 
 

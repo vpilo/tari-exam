@@ -62,23 +62,22 @@ class Message
     /**
      * Convert the message contents into raw data.
      *
-     * Use this to create packets to send over the network.
-     * Subclasses can override this method to implement custom packets.
+     * Call this to create packets to send over the network.
      *
      * @note The programmer is responsible of free()ing the buffer after its use.
      * @param size
-     *  This will be set to the amount of bytes used by the raw data.
+     *  This will be set to the amount of bytes used by the raw message data.
      * @return
      *  Raw data buffer with the message, or NULL on error
      */
-    virtual char* data( int& size ) const;
+    virtual char* toRawBytes( int& size ) const;
 
     /**
      * Analyzes a data buffer to retrieve the specific message type's data.
      *
      * @return false on error (invalid data in the buffer)
      */
-    virtual bool parseData( const char* buffer, int size );
+    virtual bool fromRawBytes( const char* buffer, int size );
 
 
   private:

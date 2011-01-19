@@ -18,6 +18,7 @@
 #include "byemessage.h"
 #include "nicknamemessage.h"
 #include "statusmessage.h"
+#include "chatmessage.h"
 
 #include <netinet/in.h>
 #include <sys/poll.h>
@@ -108,12 +109,20 @@ Message* SessionBase::parseMessage()
     case Message::MSG_STATUS:
       message = new StatusMessage();
       break;
+    case Message::MSG_CHAT:
+      message = new ChatMessage();
+      break;
     default:
-      Common::debug( "Could not create the message. Invalid type %d", type );
+      Common::error( "Could not create the message. Invalid type %d", type );
       break;
   }
 
-  bool isOk = message->parseData( dataBuffer, messageData.size );
+  if( message == NULL )
+  {
+    return NULL;
+  }
+
+  bool isOk = message->fromRawBytes( dataBuffer, messageData.size );
   if( ! isOk )
   {
     delete message;
@@ -232,7 +241,7 @@ void* SessionBase::pollForData( void* thisPointer )
 
 bool SessionBase::readData()
 {
-  Common::debug( "Session 0x%X: Receiving data...", this );
+//   Common::debug( "Session 0x%X: Receiving data...", this );
 
   int readBytes = recv( socket_,
                         buffer_ + bufferOffset_,
@@ -260,7 +269,7 @@ bool SessionBase::readData()
     return false;
   }
 
-  Common::printData( buffer_, bufferOffset_ );
+  Common::printData( buffer_, bufferOffset_, true, "Incoming message" );
 
   Message* message = parseMessage();
 
@@ -317,13 +326,32 @@ bool SessionBase::writeData()
   Message* message = sendingQueue_.front();
   sendingQueue_.pop_front();
 
-  int size = -1;
-  char* sendBuffer = message->data( size );
+  // Get the message payload
+  int payloadSize = -1;
+  char* payload = message->toRawBytes( payloadSize );
 
-  Common::printData( sendBuffer, size );
-  send( socket_, sendBuffer, size, 0 );
+  // Generate the header
+  MessageHeader header;
+  int headerSize = sizeof( MessageHeader );
+
+  strcpy( header.command, Message::command( message->type() ) );
+  header.size = payloadSize;
+
+  int sendBufferSize = headerSize + payloadSize;
+  char* sendBuffer = static_cast<char*>( malloc( sendBufferSize ) );
+  memcpy( sendBuffer,              &header,  headerSize  );
+
+  // If there's any payload, add it to the send buffer
+  if( payloadSize > 0 )
+  {
+    memcpy( sendBuffer + headerSize, payload, payloadSize );
+  }
+
+  Common::printData( sendBuffer, sendBufferSize, false, "Sent message" );
+  send( socket_, sendBuffer, sendBufferSize, 0 );
 
   free( sendBuffer );
+  free( payload );
   delete message;
 
   return false;
