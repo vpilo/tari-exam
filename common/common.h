@@ -72,7 +72,7 @@ class Common
      * @param buffer The data to display
      * @param size The size of the buffer
      */
-    static void printData( const char* buffer, int bufferSize );
+    static void printData( const char* buffer, int bufferSize, bool isIncoming = true, const char* label = 0 );
 
     static void setLogFile( const char* logFilePath );
 

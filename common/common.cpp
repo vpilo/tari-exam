@@ -73,7 +73,7 @@ void Common::fatal( const char* errorString, ... )
 
 
 
-void Common::printData( const char* buffer, int bufferSize )
+void Common::printData( const char* buffer, int bufferSize, bool isIncoming, const char* label )
 {
   #define BYTES_PER_LINE  16
 
@@ -81,13 +81,16 @@ void Common::printData( const char* buffer, int bufferSize )
   int pos = 0;
   int offset = 0;
 
-  debug( "Raw data dump (%d bytes)", bufferSize );
+  debug( "%s: %s (%d bytes)",
+         ( isIncoming ? " In" : "Out" ),
+         ( label ? label : "Raw data dump" ),
+         bufferSize );
   writeRawData( "******************************************************************************\n" );
 
   while( offset < bufferSize )
   {
     // Print the offset
-    sprintf( text, "  %05d : ", offset );
+    sprintf( text, "%05d : ", offset );
     writeRawData( text );
 
     // Then the hexadecimal data
