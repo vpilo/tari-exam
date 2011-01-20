@@ -16,8 +16,8 @@ SERVER_DEFINES = -DNETWORK_DEBUG
 CLIENT_DEFINES = -DNETWORK_DEBUG
 
 # Uncomment to completely disable debug output
-SERVER_DEFINES += -DNODEBUG
-CLIENT_DEFINES += -DNODEBUG
+# SERVER_DEFINES += -DNODEBUG
+# CLIENT_DEFINES += -DNODEBUG
 
 # Where to find includes
 INCLUDEDIRS= -I common/ -I common/messages/ -I client/ -I server/ -Lbuild/
@@ -44,6 +44,7 @@ all: server client
 # Clean up all temporary and debug files and all executables, to force the compiler to rebuild the project from scratch
 clean:
 	@rm -rf build/*
+	@rm -f *.log
 
 
 # Server
