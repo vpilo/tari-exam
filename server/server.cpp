@@ -202,6 +202,8 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
     return false;
   }
 
+  Common::debug( "Session \"%s\" sent message \"%s\"", client->nickName(), chatMessage );
+
   ChatMessage* message = new ChatMessage( chatMessage );
   message->setSender( client->nickName() );
 
@@ -209,7 +211,7 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
   std::map<SessionClient*,SessionData*>::iterator it;
   for( it = sessions_.begin(); it != sessions_.end(); it++ )
   {
-    const SessionClient* peer = (*it).first;
+    SessionClient* peer = (*it).first;
 
     // Don't send back the same message
     if( peer == client )
@@ -217,7 +219,7 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
       continue;
     }
 
-    client->sendMessage( message );
+    peer->sendMessage( message );
   }
 
   return true;

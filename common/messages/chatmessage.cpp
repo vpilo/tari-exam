@@ -53,6 +53,7 @@ bool ChatMessage::fromRawBytes( const char* buffer, int size )
 
   const Payload* readPayload = reinterpret_cast<const Payload*>( buffer );
   memcpy( &payload_, readPayload, payloadSize );
+  memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
   memcpy( message_, &(readPayload->message), payload_.messageSize );
 
   return true;
@@ -98,6 +99,7 @@ char* ChatMessage::toRawBytes( int& size ) const
 {
   size = sizeof( Payload ) + payload_.messageSize;
   Payload* writePayload = static_cast<Payload*>( malloc( size ) );
+  memset( writePayload, '\0', size );
   memcpy( writePayload, &payload_, size );
   memcpy( &(writePayload->message), message_, payload_.messageSize );
 
