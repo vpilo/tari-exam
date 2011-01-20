@@ -65,6 +65,8 @@ const char* NicknameMessage::nickName() const
 
 void NicknameMessage::setNickName( const char* newNickName )
 {
+  // Zero it out first
+  memset( payload_.nickname, '\0', MAX_NICKNAME_SIZE );
   strncpy( payload_.nickname, newNickName, MAX_NICKNAME_SIZE );
   payload_.nickname[ NICKNAME_FIELD_SIZE - 1 ] = '\0';
 }

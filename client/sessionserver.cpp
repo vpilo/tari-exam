@@ -69,6 +69,7 @@ void SessionServer::availableMessages()
         NicknameMessage* nickNameMessage = dynamic_cast<NicknameMessage*>( message );
 
         // We'll take whatever nickname the server gives us
+        memset( nickName_, '\0', MAX_NICKNAME_SIZE );
         strncpy( nickName_, nickNameMessage->nickName(), MAX_NICKNAME_SIZE - 1 );
         Common::debug( "Name changed to %s", nickName_ );
         break;

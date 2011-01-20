@@ -334,12 +334,13 @@ bool SessionBase::writeData()
   MessageHeader header;
   int headerSize = sizeof( MessageHeader );
 
-  strcpy( header.command, Message::command( message->type() ) );
+  memset( header.command, '\0', COMMAND_SIZE );
+  strncpy( header.command, Message::command( message->type() ), COMMAND_SIZE );
   header.size = payloadSize;
 
   int sendBufferSize = headerSize + payloadSize;
   char* sendBuffer = static_cast<char*>( malloc( sendBufferSize ) );
-  memcpy( sendBuffer,              &header,  headerSize  );
+  memcpy( sendBuffer, &header, headerSize );
 
   // If there's any payload, add it to the send buffer
   if( payloadSize > 0 )

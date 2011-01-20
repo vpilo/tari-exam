@@ -113,6 +113,7 @@ const char* SessionClient::nickName() const
 
 void SessionClient::setNickName( const char* newNickName )
 {
+  memset( nickName_, '\0', MAX_NICKNAME_SIZE );
   strncpy( nickName_, newNickName, MAX_NICKNAME_SIZE - 1 );
 }
 

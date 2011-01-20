@@ -75,6 +75,7 @@ const char* ChatMessage::sender() const
 
 void ChatMessage::setMessage( const char* message )
 {
+  memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
   strncpy( message_, message, MAX_CHATMESSAGE_SIZE );
   message_[ MAX_CHATMESSAGE_SIZE ] = '\0';
   payload_.messageSize = strlen( message_ );
@@ -84,6 +85,7 @@ void ChatMessage::setMessage( const char* message )
 
 void ChatMessage::setSender( const char* sender )
 {
+  memset( payload_.sender, '\0', MAX_NICKNAME_SIZE );
   strncpy( payload_.sender, sender, MAX_NICKNAME_SIZE );
   payload_.sender[ MAX_NICKNAME_SIZE - 1 ] = '\0';
 }
