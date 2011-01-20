@@ -11,6 +11,14 @@
 # Uncomment to enable debugging symbols
 DEBUG = -O0 -g3 -fno-inline -Wall -Woverloaded-virtual -Wsign-compare -Wundef
 
+# Uncomment to enable raw packet dumps of data in the respective program
+SERVER_DEFINES = -DNETWORK_DEBUG
+CLIENT_DEFINES = -DNETWORK_DEBUG
+
+# Uncomment to completely disable debug output
+SERVER_DEFINES += -DNODEBUG
+CLIENT_DEFINES += -DNODEBUG
+
 # Where to find includes
 INCLUDEDIRS= -I common/ -I common/messages/ -I client/ -I server/ -Lbuild/
 
@@ -41,10 +49,10 @@ clean:
 # Server
 server: $(GENERIC_SOURCES) $(GENERIC_HEADERS) $(SERVER_SOURCES) $(SERVER_HEADERS)
 	@echo "Building the server..."
-	g++ $(DEBUG) -o build/lanmessenger_server $(GENERIC_SOURCES) $(SERVER_SOURCES) $(INCLUDEDIRS) $(LIBRARIES)
+	g++ $(DEBUG) -o build/lanmessenger_server $(GENERIC_SOURCES) $(SERVER_SOURCES) $(SERVER_DEFINES) $(INCLUDEDIRS) $(LIBRARIES)
 
 # Client
 client: $(GENERIC_SOURCES) $(GENERIC_HEADERS) $(CLIENT_SOURCES) $(CLIENT_HEADERS)
 	@echo "Building the client..."
-	g++ $(DEBUG) -o build/lanmessenger $(GENERIC_SOURCES) $(CLIENT_SOURCES) $(INCLUDEDIRS) $(LIBRARIES)
+	g++ $(DEBUG) -o build/lanmessenger $(GENERIC_SOURCES) $(CLIENT_SOURCES) $(CLIENT_DEFINES) $(INCLUDEDIRS) $(LIBRARIES)
 

@@ -26,6 +26,10 @@ timeval Common::startTime_ = { 0L, 0L };
 
 void Common::debug( const char* debugString, ... )
 {
+#ifdef NODEBUG
+  return;
+#endif
+
   char outputString[ MAX_STRING_LENGTH ];
   va_list args;
 
@@ -75,6 +79,10 @@ void Common::fatal( const char* errorString, ... )
 
 void Common::printData( const char* buffer, int bufferSize, bool isIncoming, const char* label )
 {
+#ifdef NODEBUG
+  return;
+#endif
+
   #define BYTES_PER_LINE  16
 
   char text[ MAX_STRING_LENGTH ];

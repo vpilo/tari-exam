@@ -175,10 +175,12 @@ void* SessionBase::pollForData( void* thisPointer )
                    self->disconnectionFlag_ ? "Exiting" : "Running",
                    self->sendingQueue_.size(),
                    self->receivingQueue_.size() );
+#ifdef NETWORK_DEBUG
     Common::debug( "Used buffer:" );
     Common::printData( self->buffer_, self->bufferOffset_ );
     Common::debug( "Free buffer:" );
     Common::printData( self->buffer_ + self->bufferOffset_, MAX_MESSAGE_SIZE - self->bufferOffset_ );
+#endif
 */
 
     // If there is nothing to send, don't poll for the availability of a write operation
@@ -269,7 +271,9 @@ bool SessionBase::readData()
     return false;
   }
 
+#ifdef NETWORK_DEBUG
   Common::printData( buffer_, bufferOffset_, true, "Incoming message" );
+#endif
 
   Message* message = parseMessage();
 
@@ -348,7 +352,9 @@ bool SessionBase::writeData()
     memcpy( sendBuffer + headerSize, payload, payloadSize );
   }
 
+#ifdef NETWORK_DEBUG
   Common::printData( sendBuffer, sendBufferSize, false, "Sent message" );
+#endif
   send( socket_, sendBuffer, sendBufferSize, 0 );
 
   free( sendBuffer );
