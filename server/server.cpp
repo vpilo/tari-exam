@@ -121,6 +121,7 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
       break;
     case Message::MSG_NICKNAME:
       expectedStates.push_back( CLIENT_STATE_IDENTIFY );
+      expectedStates.push_back( CLIENT_STATE_READY );
       nextState = CLIENT_STATE_READY;
       break;
     case Message::MSG_BYE:
@@ -144,6 +145,11 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
     return;
   }
 
+  if( current->state == nextState )
+  {
+    return;
+  }
+
   current->state = nextState;
   Common::debug( "Session \"%s\" changed state to %d", current->client->nickName(), nextState );
 }
@@ -163,6 +169,12 @@ bool Server::clientChangedNickName( SessionClient* client, const char* newNickNa
   for( it = sessions_.begin(); it != sessions_.end(); it++ )
   {
     const SessionClient* peer = (*it).first;
+
+    if( peer == client )
+    {
+        continue;
+    }
+
     if( strcasecmp( newNickName, peer->nickName() ) == 0 )
     {
       return false;
