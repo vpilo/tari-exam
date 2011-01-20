@@ -15,6 +15,7 @@
 
 #include "byemessage.h"
 #include "chatmessage.h"
+#include "filetransfermessage.h"
 #include "hellomessage.h"
 #include "nicknamemessage.h"
 #include "statusmessage.h"
@@ -26,6 +27,7 @@
 SessionServer::SessionServer( Client* parent, const int socket )
 : SessionBase( socket )
 , client_( parent )
+, hasFileTransfer_( false )
 {
   sendMessage( new HelloMessage() );
 }
@@ -90,6 +92,15 @@ void SessionServer::availableMessages()
         break;
       }
 
+      case Message::MSG_FILE_REQUEST:
+      {
+        FileTransferMessage* fileMessage = dynamic_cast<FileTransferMessage*>( message );
+
+        Common::debug( "Got file transfer request by '%s': %s", fileMessage->sender(), fileMessage->fileName() );
+        client_->gotFileTransferRequest( fileMessage->sender(),fileMessage->fileName() );
+        break;
+      }
+
       default:
         break;
     }
@@ -115,9 +126,26 @@ void SessionServer::disconnect()
 
 
 
+bool SessionServer::hasFileTransfer() const
+{
+  return hasFileTransfer_;
+}
+
+
+
 const char* SessionServer::nickName() const
 {
-    return nickName_;
+  return nickName_;
+}
+
+
+
+void SessionServer::sendFile( const char* fileName )
+{
+  hasFileTransfer_ = true;
+  strncpy( fileName_, fileName, MAX_PATH_SIZE );
+
+  sendMessage( new FileTransferMessage( fileName ) );
 }
 
 

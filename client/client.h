@@ -42,11 +42,12 @@ class Client
 
     Errors::ErrorCode initialize( const in_addr serverIp, const int serverPort );
 
-    bool askQuestion( const char* question, char* answer );
+    bool askQuestion( const char* question, char* answer, const int answerSize );
     void changeStatusMessage( const char* message = NULL, bool permanent = false );
     void connectionClosed( SessionServer* connection );
 
     void gotChatMessage( const char* sender, const char* message );
+    void gotFileTransferRequest( const char* sender, const char* filename );
     void gotNicknameChange( const char* nickName );
     void gotStatusMessage( const char* message );
     void run();

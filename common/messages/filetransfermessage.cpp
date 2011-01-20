@@ -8,7 +8,7 @@
  * (at your option) any later version.
  */
 
-#include "chatmessage.h"
+#include "filetransfermessage.h"
 
 #include "common.h"
 
@@ -17,32 +17,32 @@
 
 
 
-ChatMessage::ChatMessage()
-: Message( Message::MSG_CHAT )
+FileTransferMessage::FileTransferMessage()
+: Message( Message::MSG_FILE_REQUEST )
 {
-  payload_.message = NULL;
+  setFileName( NULL );
   setSender( NULL );
 }
 
 
 
-ChatMessage::ChatMessage( const char* message )
-: Message( Message::MSG_CHAT )
+FileTransferMessage::FileTransferMessage( const char* fileName )
+: Message( Message::MSG_FILE_REQUEST )
 {
-  setMessage( message );
+  setFileName( fileName );
   setSender( NULL ); // Message from the user
 }
 
 
 
-ChatMessage::~ChatMessage()
+FileTransferMessage::~FileTransferMessage()
 {
 
 }
 
 
 
-bool ChatMessage::fromRawBytes( const char* buffer, int size )
+bool FileTransferMessage::fromRawBytes( const char* buffer, int size )
 {
   int payloadSize = sizeof( Payload );
   if( size < payloadSize )
@@ -53,38 +53,38 @@ bool ChatMessage::fromRawBytes( const char* buffer, int size )
 
   const Payload* readPayload = reinterpret_cast<const Payload*>( buffer );
   memcpy( &payload_, readPayload, payloadSize );
-  memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
-  memcpy( message_, &(readPayload->message), payload_.messageSize );
 
   return true;
 }
 
 
 
-const char* ChatMessage::message() const
+const char* FileTransferMessage::fileName() const
 {
-  return message_;
+  return payload_.fileName;
 }
 
 
 
-const char* ChatMessage::sender() const
+const char* FileTransferMessage::sender() const
 {
   return payload_.sender;
 }
 
 
 
-void ChatMessage::setMessage( const char* message )
+void FileTransferMessage::setFileName( const char* fileName )
 {
-  memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
-  strncpy( message_, message, MAX_CHATMESSAGE_SIZE );
-  payload_.messageSize = strlen( message_ );
+  memset( payload_.fileName, '\0', MAX_PATH_SIZE );
+  if( fileName != NULL && strlen( fileName ) > 0 )
+  {
+    strncpy( payload_.fileName, fileName, MAX_PATH_SIZE );
+  }
 }
 
 
 
-void ChatMessage::setSender( const char* sender )
+void FileTransferMessage::setSender( const char* sender )
 {
   memset( payload_.sender, '\0', MAX_NICKNAME_SIZE );
   if( sender != NULL && strlen( sender ) > 0 )
@@ -95,13 +95,12 @@ void ChatMessage::setSender( const char* sender )
 
 
 
-char* ChatMessage::toRawBytes( int& size ) const
+char* FileTransferMessage::toRawBytes( int& size ) const
 {
-  size = sizeof( Payload ) + payload_.messageSize;
+  size = sizeof( Payload );
   Payload* writePayload = static_cast<Payload*>( malloc( size ) );
   memset( writePayload, '\0', size );
   memcpy( writePayload, &payload_, size );
-  memcpy( &(writePayload->message), message_, payload_.messageSize );
 
   return reinterpret_cast<char*>( writePayload );
 }

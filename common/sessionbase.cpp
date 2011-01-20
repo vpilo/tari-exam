@@ -14,11 +14,12 @@
 #include "message.h"
 #include "protocol.h"
 
-#include "hellomessage.h"
 #include "byemessage.h"
+#include "chatmessage.h"
+#include "filetransfermessage.h"
+#include "hellomessage.h"
 #include "nicknamemessage.h"
 #include "statusmessage.h"
-#include "chatmessage.h"
 
 #include <netinet/in.h>
 #include <sys/poll.h>
@@ -62,15 +63,15 @@ Message* SessionBase::parseMessage()
 {
   int messageHeaderSize = sizeof( MessageHeader );
 
-  MessageHeader messageData;
-  memcpy( &messageData, buffer_, messageHeaderSize );
+  MessageHeader messageHeader;
+  memcpy( &messageHeader, buffer_, messageHeaderSize );
 
   // Identify the command
   Message::Type type = Message::MSG_INVALID;
   for( int i = Message::MSG_INVALID + 1; i < Message::MSG_MAX; i++ )
   {
     Message::Type current = static_cast<Message::Type>( i );
-    if( strcmp( messageData.command, Message::command( current ) ) == 0 )
+    if( strcmp( messageHeader.command, Message::command( current ) ) == 0 )
     {
       type = current;
       break;
@@ -80,12 +81,12 @@ Message* SessionBase::parseMessage()
   // Validate the header fields
   if( type == Message::MSG_INVALID )
   {
-    Common::error( "Received invalid command \"%s\"!", messageData.command );
+    Common::error( "Received invalid command \"%s\"!", messageHeader.command );
     return NULL;
   }
-  if( ( messageHeaderSize + messageData.size ) > MAX_MESSAGE_SIZE )
+  if( ( messageHeaderSize + messageHeader.size ) > MAX_MESSAGE_SIZE )
   {
-    Common::error( "Received invalid message data size \"%d\"!", messageData.size );
+    Common::error( "Received invalid message data size \"%d\"!", messageHeader.size );
     return NULL;
   }
 
@@ -112,6 +113,9 @@ Message* SessionBase::parseMessage()
     case Message::MSG_CHAT:
       message = new ChatMessage();
       break;
+    case Message::MSG_FILE_REQUEST:
+      message = new FileTransferMessage();
+      break;
     default:
       Common::error( "Could not create the message. Invalid type %d", type );
       break;
@@ -122,7 +126,7 @@ Message* SessionBase::parseMessage()
     return NULL;
   }
 
-  bool isOk = message->fromRawBytes( dataBuffer, messageData.size );
+  bool isOk = message->fromRawBytes( dataBuffer, messageHeader.size );
   if( ! isOk )
   {
     delete message;
@@ -132,7 +136,7 @@ Message* SessionBase::parseMessage()
   // Message is OK, move the rest of the buffer data at the start of the buffer
   // so the next one can be read
 
-  bufferOffset_ += messageData.size;
+  bufferOffset_ += messageHeader.size;
   int remainder = MAX_MESSAGE_SIZE - bufferOffset_;
   memcpy( buffer_, buffer_ + bufferOffset_, remainder );
   bufferOffset_ = 0;
@@ -261,18 +265,16 @@ bool SessionBase::readData()
     return true;
   }
 
-  bufferOffset_ += readBytes;
-
   // Received data is shorter than the minimum message size, cannot be a valid message
   int messageHeaderSize = sizeof( MessageHeader );
-  if( bufferOffset_ < messageHeaderSize )
+  if( ( bufferOffset_ + readBytes ) < messageHeaderSize )
   {
     Common::debug( "Not enough data yet. Minimum size is %d bytes, received only %d", messageHeaderSize, bufferOffset_ );
     return false;
   }
 
 #ifdef NETWORK_DEBUG
-  Common::printData( buffer_, bufferOffset_, true, "Incoming message" );
+  Common::printData( buffer_, bufferOffset_ + readBytes, true, "Incoming message" );
 #endif
 
   Message* message = parseMessage();

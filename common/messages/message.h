@@ -31,7 +31,6 @@ class Message
     , MSG_BYE
     , MSG_CHAT
     , MSG_FILE_REQUEST
-    , MSG_FILE_RESPONSE
     , MSG_FILE_DATA
     , MSG_MAX /// Total number of message types. Do not use.
     };

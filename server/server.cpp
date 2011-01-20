@@ -11,6 +11,7 @@
 #include "server.h"
 
 #include "chatmessage.h"
+#include "filetransfermessage.h"
 #include "common.h"
 #include "errors.h"
 #include "sessionclient.h"
@@ -204,8 +205,45 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
 
   Common::debug( "Session \"%s\" sent message \"%s\"", client->nickName(), chatMessage );
 
-  ChatMessage* message = new ChatMessage( chatMessage );
-  message->setSender( client->nickName() );
+  // Send the same message to everybody but the sender
+  std::map<SessionClient*,SessionData*>::iterator it;
+  for( it = sessions_.begin(); it != sessions_.end(); it++ )
+  {
+    SessionClient* peer = (*it).first;
+
+    // Don't send back the same message
+    if( peer == client )
+    {
+      continue;
+    }
+
+    ChatMessage* message = new ChatMessage( chatMessage );
+    message->setSender( client->nickName() );
+    peer->sendMessage( message );
+  }
+
+  return true;
+}
+
+
+
+bool Server::clientSentFileTransferMessage( SessionClient* client, const char* filePath )
+{
+  SessionData* current = findSession( client );
+  if( ! current )
+  {
+    Common::fatal( "Received a message from unknown session 0x%X!", client );
+  }
+
+  // The user is alone by him/herself in chat
+  if( sessions_.size() == 1 )
+  {
+    return false;
+  }
+
+  const char* fileName = basename( filePath );
+
+  Common::debug( "Session \"%s\" wants to send file \"%s\"", client->nickName(), fileName );
 
   // Send the same message to everybody but the sender
   std::map<SessionClient*,SessionData*>::iterator it;
@@ -219,6 +257,8 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
       continue;
     }
 
+    FileTransferMessage* message = new FileTransferMessage( fileName );
+    message->setSender( client->nickName() );
     peer->sendMessage( message );
   }
 

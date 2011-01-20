@@ -11,8 +11,10 @@
 #include "client.h"
 
 #include "common.h"
+#include "chatmessage.h"
 #include "errors.h"
 #include "sessionserver.h"
+#include "statusmessage.h"
 
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -22,7 +24,6 @@
 #include <semaphore.h>
 #include <string.h>
 #include <unistd.h>
-#include <chatmessage.h>
 #include <ctype.h>
 
 
@@ -117,7 +118,7 @@ Client::~Client()
 
 
 
-bool Client::askQuestion( const char* question, char* answer )
+bool Client::askQuestion( const char* question, char* answer, const int answerSize )
 {
   Common::debug( "Asking question: \"%s\"", question );
 
@@ -169,8 +170,14 @@ bool Client::askQuestion( const char* question, char* answer )
         break;
 
       default:
+        if( pos >= ( answerSize - 1 ) )
+        {
+            break;
+        }
+
         answer[ pos++ ] = ch;
         addch( ch );
+        break;
     }
   }
 
@@ -247,6 +254,44 @@ void Client::gotChatMessage( const char* sender, const char* message )
   }
 
   chatHistory_.push_back( row );
+
+  changeStatusMessage();
+  updateView();
+}
+
+
+
+void Client::gotFileTransferRequest( const char* sender, const char* filename )
+{
+  char string[ MAX_MESSAGE_SIZE ];
+  sprintf( string, "Received a request to transfer \"%s\" from %s", filename, sender );
+  gotStatusMessage( string );
+
+  sprintf( string, "Do you want to accept the file \"%s\" from %s? [Y/n]", filename, sender );
+
+  bool accept = false;
+  bool answered = false;
+  char acceptStr[5];
+
+  while( ! answered )
+  {
+    if( ! askQuestion( string, acceptStr, 5 ) )
+    {
+      accept = false;
+      break;
+    }
+
+    accept = ( strcasecmp( acceptStr, "y" ) == 0 );
+    answered = ( accept || ( strcasecmp( acceptStr, "n" ) == 0 ) );
+  }
+
+  Errors::StatusCode status = ( accept ? Errors::Status_AcceptFileTransfer
+                                       : Errors::Status_RejectFileTransfer );
+
+  connection_->sendMessage( new StatusMessage( status ) );
+
+  sprintf( string, "File transfer request %s.", ( accept ? "accepted" : "rejected" ) );
+  gotStatusMessage( string );
 
   changeStatusMessage();
   updateView();
@@ -378,10 +423,31 @@ void Client::run()
 
         char newName[ MAX_NICKNAME_SIZE ];
 
-        if( askQuestion( "Insert a new nickname:", newName ) && strlen( newName ) >= 1 )
+        if( askQuestion( "Insert a new nickname:", newName, MAX_NICKNAME_SIZE ) && strlen( newName ) >= 1 )
         {
           connection_->setNickName( newName );
         }
+        break;
+      }
+
+      case KEY_F( 4 ):
+      {
+        if( connection_->hasFileTransfer() )
+        {
+          gotStatusMessage( "A file transfer is already in progress." );
+          break;
+        }
+
+        Common::debug( "Sending file..." );
+
+        char fileName[ MAX_PATH_SIZE ];
+
+        if( askQuestion( "Choose a file name:", fileName, MAX_PATH_SIZE ) && strlen( fileName ) >= 1 )
+        {
+          connection_->sendFile( fileName );
+        }
+
+        gotStatusMessage( "Waiting for the other participants to answer the request." );
         break;
       }
 

@@ -39,6 +39,7 @@ public:
 
     bool clientChangedNickName( SessionClient* client, const char* newNickName );
     bool clientSentChatMessage( SessionClient* client, const char* chatMessage );
+    bool clientSentFileTransferMessage( SessionClient* client, const char* filePath );
 
 
 private:

@@ -31,6 +31,14 @@
 
 
 /**
+ * @def MAX_PATH_SIZE
+ *
+ * Maximum length of a filename path in bytes.
+ */
+#define MAX_PATH_SIZE  64
+
+
+/**
  * @def MAX_NICKNAME_SIZE
  *
  * Maximum length of the user nickname in bytes.

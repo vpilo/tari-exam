@@ -30,11 +30,13 @@ class SessionServer : public SessionBase
 
     SessionServer( Client* parent, const int socket );
     virtual ~SessionServer();
-    virtual void disconnect();
 
     void chat( const char* message );
+    virtual void disconnect();
+    bool hasFileTransfer() const;
     const char* nickName() const;
     void setNickName( const char* nickName );
+    void sendFile( const char* fileName );
 
 
   private:
@@ -46,6 +48,10 @@ class SessionServer : public SessionBase
 
     /// Pointer to the parent client
     Client* client_;
+
+    bool hasFileTransfer_;
+
+    char fileName_[ MAX_PATH_SIZE ];
 
     char nickName_[ MAX_NICKNAME_SIZE ];
 

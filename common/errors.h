@@ -34,6 +34,8 @@ class Errors
       Status_Ok                        = 200
     , Status_ChattingAlone
     , Status_NickNameAlreadyRegistered
+    , Status_AcceptFileTransfer
+    , Status_RejectFileTransfer
     };
 
 

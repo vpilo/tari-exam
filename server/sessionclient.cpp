@@ -14,9 +14,10 @@
 #include "message.h"
 #include "server.h"
 
+#include "chatmessage.h"
+#include "filetransfermessage.h"
 #include "statusmessage.h"
 #include "nicknamemessage.h"
-#include "chatmessage.h"
 
 #include <string.h>
 
@@ -88,6 +89,16 @@ void SessionClient::availableMessages()
       {
         ChatMessage* chatMessage = dynamic_cast<ChatMessage*>( message );
         if( ! server_->clientSentChatMessage( this, chatMessage->message() ) )
+        {
+          sendMessage( new StatusMessage( Errors::Status_ChattingAlone ) );
+        }
+        break;
+      }
+
+      case Message::MSG_FILE_REQUEST:
+      {
+        FileTransferMessage* fileMessage = dynamic_cast<FileTransferMessage*>( message );
+        if( ! server_->clientSentFileTransferMessage( this, fileMessage->fileName() ) )
         {
           sendMessage( new StatusMessage( Errors::Status_ChattingAlone ) );
         }

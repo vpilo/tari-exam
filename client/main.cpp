@@ -14,6 +14,7 @@
 
 #include <netdb.h>
 #include <string.h>
+#include <unistd.h>
 
 
 #define DEFAULT_SERVER_IP  "127.0.0.1"
@@ -33,7 +34,9 @@ void usage( const char* programName )
  */
 int main( int argc, char* argv[] )
 {
-  Common::setLogFile( "lanmessenger-client.log" );
+  char pid[ 16 ];
+  sprintf( pid, "lanmessenger-client.%d.log", getpid() );
+  Common::setLogFile( pid );
   Common::debug( "LAN Messenger client" );
 
   // Check command-line arguments:
