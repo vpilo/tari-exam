@@ -174,7 +174,7 @@ void Common::writeLine( const char* prefix, const char* string )
 
   // Compose the debug line, adding the elapsed time (very useful when multithreading)
   char line[ MAX_STRING_LENGTH ];
-  sprintf( line, "\r%7.3f> %s%s\n", elapsed, prefix, string );
+  sprintf( line, "%7.3f> %s%s\n", elapsed, prefix, string );
 
   writeRawData( line );
 }
