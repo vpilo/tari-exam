@@ -27,16 +27,28 @@
 
 
 /**
- * @def KEY_ESC
+ * @def KEYCODE_ESC
  * NCurses doesn't have a define for the ESC key
  */
-#define KEY_ESC   27
+#define KEYCODE_ESC   27
 
 /**
- * @def KEY_ENTER
+ * @def KEYCODE_ENTER
  * NCurses doesn't have a define for the ENTER key
  */
-#define KEY_RETURN   10
+#define KEYCODE_ENTER   10
+
+/**
+ * @def KEYCODE_BACKSPACE
+ * NCurses doesn't have a define for the Backspace key
+ */
+#define KEYCODE_BACKSPACE   263
+
+/**
+ * @def KEYCODE_CANC
+ * NCurses doesn't have a define for the Canc key
+ */
+#define KEYCODE_CANC   330
 
 /**
  * @def STATUS_MESSAGE_TIMEOUT
@@ -66,6 +78,9 @@ Client::Client()
   keypad( stdscr, true );
   curs_set( 1 );
   raw(); // Disable Ctrl-C
+
+  changeStatusMessage( "Welcome!", true );
+  updateView();
 }
 
 
@@ -92,6 +107,12 @@ Client::~Client()
   }
 
   close( socket_ );
+
+  std::deque<Row*>::iterator it;
+  for( it = chatHistory_.begin(); it != chatHistory_.end(); it++ )
+  {
+    delete (*it);
+  }
 }
 
 
@@ -100,14 +121,13 @@ bool Client::askQuestion( const char* question, char* answer )
 {
   Common::debug( "Asking question: \"%s\"", question );
 
+  int pos = 0;
   bool done = false;
   const int cursorPos = strlen( question ) + 1; // Add a space after the question
-  int pos = 0;
-
-  mvaddstr( maxY_, 0, question );
 
   while( ! done )
   {
+    mvaddstr( maxY_, 0, question );
     wmove( stdscr, maxY_, pos + cursorPos );
     refresh();
 
@@ -131,17 +151,21 @@ bool Client::askQuestion( const char* question, char* answer )
 
     switch( ch )
     {
-      case KEY_ESC:
+      case KEYCODE_ESC:
         Common::debug( "Got ESC, stopping asking question" );
         done = true;
         pos = 0;
         answer[ pos ] = '\0';
         break;
 
-      case KEY_RETURN:
+      case KEYCODE_ENTER:
         answer[ pos ] = '\0';
         Common::debug( "Enter pressed, stopping asking question. Answer: \"%s\"", answer );
         done = true;
+        break;
+
+      case KEYCODE_BACKSPACE:
+        mvaddch( maxY_, --pos, ' ' );
         break;
 
       default:
@@ -163,7 +187,11 @@ bool Client::askQuestion( const char* question, char* answer )
 void Client::changeStatusMessage( const char* message, bool permanent )
 {
   memset( statusMessage_, '\0', MAX_MESSAGE_SIZE );
-  strncpy( statusMessage_, message, MAX_MESSAGE_SIZE );
+
+  if( message != NULL )
+  {
+    strncpy( statusMessage_, message, MAX_MESSAGE_SIZE );
+  }
 
   if( permanent )
   {
@@ -173,6 +201,8 @@ void Client::changeStatusMessage( const char* message, bool permanent )
   {
     statusMessageTime_ = time( NULL );
   }
+
+  updateView();
 }
 
 
@@ -183,6 +213,8 @@ void Client::connectionClosed( SessionServer* connection )
   {
     Common::fatal( "Unknown connection was closed!" );
   }
+
+  changeStatusMessage( "Disconnected! Bye!", true );
 
   connection_ = 0;
 
@@ -199,7 +231,10 @@ void Client::gotChatMessage( const char* sender, const char* message )
   row->incoming = true;
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
-  strncpy( row->sender, sender, MAX_NICKNAME_SIZE );
+  if( strlen( sender ) > 0 )
+  {
+    strncpy( row->sender, sender, MAX_NICKNAME_SIZE );
+  }
   memset( row->message, '\0', MAX_MESSAGE_SIZE );
   strncpy( row->message, message, MAX_MESSAGE_SIZE );
   row->dateTime = time( NULL );
@@ -212,6 +247,7 @@ void Client::gotChatMessage( const char* sender, const char* message )
 
   chatHistory_.push_back( row );
 
+  changeStatusMessage();
   updateView();
 }
 
@@ -219,6 +255,36 @@ void Client::gotChatMessage( const char* sender, const char* message )
 
 void Client::gotNicknameChange( const char* nickName )
 {
+  char string[ MAX_MESSAGE_SIZE ];
+  sprintf( string, "You changed your name to %s", nickName );
+  gotStatusMessage( string );
+
+  changeStatusMessage();
+  updateView();
+}
+
+
+
+void Client::gotStatusMessage( const char* message )
+{
+  Row* row = new Row();
+  row->incoming = true;
+
+  memset( row->sender, '\0', MAX_NICKNAME_SIZE );
+  strncpy( row->sender, "SERVER", MAX_NICKNAME_SIZE );
+  memset( row->message, '\0', MAX_MESSAGE_SIZE );
+  strncpy( row->message, message, MAX_MESSAGE_SIZE );
+  row->dateTime = time( NULL );
+
+  if( chatHistory_.size() > HISTORY_SIZE )
+  {
+    delete chatHistory_.front();
+    chatHistory_.pop_front();
+  }
+
+  chatHistory_.push_back( row );
+
+  changeStatusMessage();
   updateView();
 }
 
@@ -256,8 +322,7 @@ Errors::ErrorCode Client::initialize( const in_addr serverIp, const int serverPo
   pthread_create( &connectionThread_, NULL, &SessionServer::pollForData, connection_ );
 
   Common::debug( "Connection established" );
-
-  updateView();
+  changeStatusMessage( "Connected, logging in...", true );
 
   return Errors::Error_None;
 }
@@ -278,7 +343,7 @@ void Client::run()
     sprintf(str, "Keypress %i, '%c'", ch, isprint( ch ) ? ch : '?' );
     mvaddstr( maxY_ - 2, maxX_- strlen( str ), str );
 
-    wmove( stdscr, maxY_, currentMessagePos_ );
+    move( maxY_, currentMessagePos_ );
     refresh();
 
     // No characters have been typed
@@ -297,8 +362,10 @@ void Client::run()
 
     switch( ch )
     {
-      case KEY_ESC:
+      case KEYCODE_ESC:
         Common::debug( "Got ESC, quitting" );
+        changeStatusMessage( "Quitting...", true );
+        updateView();
         connection_->disconnect();
         quit = true;
         break;
@@ -316,18 +383,32 @@ void Client::run()
         break;
       }
 
-      case KEY_RETURN:
+      case KEYCODE_ENTER:
         Common::debug( "Enter pressed" );
         if( currentMessagePos_ == 0 )
         {
           break;
         }
 
-        Common::debug( "Sending message..." );
+        Common::debug( "Sending message: %s (%d bytes)", currentMessage_, currentMessagePos_ );
         currentMessage_[ currentMessagePos_ ] = '\0';
-        currentMessagePos_ = 0;
         sendChatMessage( currentMessage_ );
+
+        currentMessagePos_ = 0;
+
         updateView();
+        break;
+
+      case KEYCODE_BACKSPACE:
+        if( currentMessagePos_ == 0 )
+        {
+          break;
+        }
+
+        --currentMessagePos_;
+        mvaddch( maxY_, currentMessagePos_, ' ' );
+        currentMessage_[ currentMessagePos_ ] = '\0';
+        move( maxY_, currentMessagePos_ );
         break;
 
       default:
@@ -353,10 +434,10 @@ void Client::sendChatMessage( const char* message )
 {
   Row* row = new Row();
   row->incoming = false;
-  row->sender[0] = '\0';
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
   memset( row->message, '\0', MAX_MESSAGE_SIZE );
+  strncpy( row->sender, connection_->nickName(), MAX_NICKNAME_SIZE );
   strncpy( row->message, message, MAX_MESSAGE_SIZE );
   row->dateTime = time( NULL );
 
@@ -370,6 +451,7 @@ void Client::sendChatMessage( const char* message )
 
   chatHistory_.push_back( row );
 
+  changeStatusMessage();
   updateView();
 }
 
@@ -379,6 +461,10 @@ void Client::updateView()
 {
   getmaxyx( stdscr, maxY_, maxX_ );
 
+  // This way I don't have to use max - 1 to refer to the last line/col
+  maxX_--;
+  maxY_--;
+
   // Rows available for chat history
   const int chatHistoryFirstRow = 2;
   const int chatHistoryLastRow = maxY_ - 3;
@@ -386,9 +472,24 @@ void Client::updateView()
   const int lineAbove = chatHistoryFirstRow - 1;
   const int lineBelow = chatHistoryLastRow + 1;
 
+  for( int i = 0; i < maxX_; i++ )
+  {
+    // First line with status messages
+    mvaddch( 0, i, ' ' );
+    // Separators
+    mvaddch( lineAbove, i, '=' );
+    mvaddch( lineBelow, i, '=' );
+  }
+
   char string[ MAX_MESSAGE_SIZE ];
 
-  if( ( time( NULL ) - statusMessageTime_ ) > STATUS_MESSAGE_TIMEOUT )
+  // Don't expire the status message if it's permanent (value 0)
+  if( statusMessageTime_ != 0 && ( time( NULL ) - statusMessageTime_ ) > STATUS_MESSAGE_TIMEOUT )
+  {
+    *statusMessage_ = '\0';
+  }
+
+  if( strlen( statusMessage_ ) < 1 )
   {
     // The previous status message has expired, change it with the default
     if( connectionThread_ != 0 && connection_ != 0 )
@@ -397,19 +498,12 @@ void Client::updateView()
     }
     else
     {
-      *string = '\0';
+      sprintf( statusMessage_, "Disconnected" );
     }
-    changeStatusMessage( string, true );
   }
 
   sprintf( string, "LAN Messenger - %s", statusMessage_ );
   mvaddstr( 0, 1, string );
-
-  for( int i = 0; i < maxX_; i++ )
-  {
-    mvaddch( lineAbove, i, '=' );
-    mvaddch( lineBelow, i, '=' );
-  }
 
 
   // Display the messages history
@@ -420,12 +514,14 @@ void Client::updateView()
   {
     Row* row = (*it);
 
-    char dateTime[ 16 ];
     struct tm* timeinfo = localtime ( &( row->dateTime ) );
 
+    char dateTime[ 16 ];
     strftime( dateTime, 16, "%H.%M", timeinfo );
-    sprintf( string, "%s<%s> %s", dateTime, row->sender, row->message );
+
+    sprintf( string, "%s <%s> %s", dateTime, row->sender, row->message );
     mvaddnstr( currentRow--, 0, string, maxX_ );
+    clrtoeol();
 
     if( currentRow < chatHistoryFirstRow )
     {
@@ -442,9 +538,10 @@ void Client::updateView()
     }
     else
     {
-      mvaddch( maxX_, i, ' ' );
+      mvaddch( maxY_, i, ' ' );
     }
   }
+  wmove( stdscr, maxY_, currentMessagePos_ );
 
   refresh();
 }

@@ -66,9 +66,6 @@ int main( int argc, char* argv[] )
   if( status != Errors::Error_None )
   {
     Common::error( "Client could not be started: error %d", status );
-
-    client->changeStatusMessage( "Unable to connect!", true );
-    sleep( 2 );
     delete client;
 
     fprintf( stderr, "Unable to connect to the server at %s\n", serverIpString );

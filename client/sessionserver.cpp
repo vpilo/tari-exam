@@ -56,6 +56,11 @@ void SessionServer::availableMessages()
           case Errors::Status_NickNameAlreadyRegistered:
             // Keep the original nickname, the wanted one wasn't accepted
             Common::error( "The nickname change wasn't accepted." );
+            client_->gotStatusMessage( "Unable to change nickname!" );
+            break;
+
+          case Errors::Status_ChattingAlone:
+            client_->gotStatusMessage( "There are no other participants to the chat!" );
             break;
 
           default:
