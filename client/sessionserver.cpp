@@ -72,6 +72,7 @@ void SessionServer::availableMessages()
         memset( nickName_, '\0', MAX_NICKNAME_SIZE );
         strncpy( nickName_, nickNameMessage->nickName(), MAX_NICKNAME_SIZE - 1 );
         Common::debug( "Name changed to %s", nickName_ );
+        client_->gotNicknameChange( nickName_ );
         break;
       }
 
@@ -105,6 +106,13 @@ void SessionServer::disconnect()
 {
   sendMessage( new ByeMessage() );
   SessionBase::disconnect();
+}
+
+
+
+const char* SessionServer::nickName() const
+{
+    return nickName_;
 }
 
 

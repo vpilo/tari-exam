@@ -12,7 +12,6 @@
 #include "common.h"
 #include "errors.h"
 
-// #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
 
@@ -34,7 +33,7 @@ void usage( const char* programName )
  */
 int main( int argc, char* argv[] )
 {
-//   Common::setLogFile( "lanmessenger-server.log" );
+  Common::setLogFile( "lanmessenger-client.log" );
   Common::debug( "LAN Messenger client" );
 
   // Check command-line arguments:
@@ -42,9 +41,9 @@ int main( int argc, char* argv[] )
   in_addr serverIp;
   serverIp.s_addr = htonl( INADDR_LOOPBACK );
 
+  char* serverIpString = argv[ 1 ];
   if( argc == 2 )
   {
-    char* serverIpString = argv[ 1 ];
     if( strcmp( serverIpString, "-h" ) == 0 )
     {
       usage( argv[ 0 ] );
@@ -68,7 +67,11 @@ int main( int argc, char* argv[] )
   {
     Common::error( "Client could not be started: error %d", status );
 
+    client->changeStatusMessage( "Unable to connect!", true );
+    sleep( 2 );
     delete client;
+
+    fprintf( stderr, "Unable to connect to the server at %s\n", serverIpString );
     return status;
   }
 

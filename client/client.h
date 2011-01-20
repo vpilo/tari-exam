@@ -11,12 +11,21 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include "errors.h"
+#include "protocol.h"
+
 #include <netinet/in.h>
 #include <pthread.h>
+#include <time.h>
 
-#include <list>
+#include <deque>
 
-#include "errors.h"
+
+/**
+ * @def HISTORY_SIZE
+ * Number of rows of text saved as chat history
+ */
+#define HISTORY_SIZE   128
 
 
 class SessionServer;
@@ -26,24 +35,54 @@ class SessionServer;
 class Client
 {
 
-public:
+  public:
 
-  Client();
-  ~Client();
+    Client();
+    ~Client();
 
-  Errors::ErrorCode initialize( const in_addr serverIp, const int serverPort );
+    Errors::ErrorCode initialize( const in_addr serverIp, const int serverPort );
 
-  void connectionClosed( SessionServer* connection );
+    bool askQuestion( const char* question, char* answer );
+    void changeStatusMessage( const char* message, bool permanent = false );
+    void connectionClosed( SessionServer* connection );
 
-  void gotChatMessage( const char* sender, const char* message );
-  void run();
+    void gotChatMessage( const char* sender, const char* message );
+    void gotNicknameChange( const char* nickName );
+    void run();
+    void sendChatMessage( const char* message );
 
-private:
+    void updateView();
 
-  int socket_;
 
-  SessionServer* connection_;
-  pthread_t connectionThread_;
+  private:
+
+      struct Row
+      {
+        char sender[ MAX_NICKNAME_SIZE ];
+        char message[ MAX_MESSAGE_SIZE ];
+        time_t dateTime;
+        bool incoming;
+      };
+
+
+  private:
+
+    std::deque<Row*> chatHistory_;
+
+    SessionServer* connection_;
+
+    pthread_t connectionThread_;
+
+    int currentMessagePos_;
+    char currentMessage_[ MAX_MESSAGE_SIZE ];
+
+    int maxX_;
+    int maxY_;
+
+    int socket_;
+
+    char statusMessage_[ MAX_MESSAGE_SIZE ];
+    time_t statusMessageTime_;
 
 
 };
