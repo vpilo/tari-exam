@@ -63,6 +63,7 @@ class Client
         char message[ MAX_MESSAGE_SIZE ];
         time_t dateTime;
         bool incoming;
+        bool special;
       };
 
 

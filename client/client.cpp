@@ -238,6 +238,7 @@ void Client::gotChatMessage( const char* sender, const char* message )
   memset( row->message, '\0', MAX_MESSAGE_SIZE );
   strncpy( row->message, message, MAX_MESSAGE_SIZE );
   row->dateTime = time( NULL );
+  row->special = false;
 
   if( chatHistory_.size() > HISTORY_SIZE )
   {
@@ -269,6 +270,7 @@ void Client::gotStatusMessage( const char* message )
 {
   Row* row = new Row();
   row->incoming = true;
+  row->special = true;
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
   strncpy( row->sender, "SERVER", MAX_NICKNAME_SIZE );
@@ -434,6 +436,7 @@ void Client::sendChatMessage( const char* message )
 {
   Row* row = new Row();
   row->incoming = false;
+  row->special = false;
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
   memset( row->message, '\0', MAX_MESSAGE_SIZE );
@@ -520,7 +523,19 @@ void Client::updateView()
     strftime( dateTime, 16, "%H.%M", timeinfo );
 
     sprintf( string, "%s <%s> %s", dateTime, row->sender, row->message );
+
+    if( row->special )
+    {
+      attron( A_BOLD );
+    }
+
     mvaddnstr( currentRow--, 0, string, maxX_ );
+
+    if( row->special )
+    {
+      attroff( A_BOLD );
+    }
+
     clrtoeol();
 
     if( currentRow < chatHistoryFirstRow )
