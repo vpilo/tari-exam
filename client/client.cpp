@@ -19,12 +19,13 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <ctype.h>
 #include <curses.h>
+#include <errno.h>
 #include <netdb.h>
 #include <semaphore.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
 
 
 /**
@@ -70,13 +71,19 @@ Client::Client()
 , maxX_( 0 )
 , maxY_( 0 )
 {
+  int result = pthread_mutex_init( &inputMutex_, NULL );
+  if( result != 0 )
+  {
+    Common::fatal( "Input mutex creation failed: error %d", result );
+  }
+
   sem_init( &sessionEndSignal, 0, 0 );
 
   // Enable ncurses
   initscr();
   noecho();
-  halfdelay( 5 ); // 5 tenths of second timeout for character input
   keypad( stdscr, true );
+  notimeout( stdscr, true );
   curs_set( 1 );
   raw(); // Disable Ctrl-C
 
@@ -114,6 +121,8 @@ Client::~Client()
   {
     delete (*it);
   }
+
+  pthread_mutex_destroy( &inputMutex_ );
 }
 
 
@@ -122,14 +131,16 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
 {
   Common::debug( "Asking question: \"%s\"", question );
 
+  mvaddstr( maxY_, 0, question );
+
   int pos = 0;
   bool done = false;
   const int cursorPos = strlen( question ) + 1; // Add a space after the question
 
   while( ! done )
   {
-    mvaddstr( maxY_, 0, question );
     wmove( stdscr, maxY_, pos + cursorPos );
+    clrtoeol();
     refresh();
 
     // Get the typed character, if is there any
@@ -263,6 +274,9 @@ void Client::gotChatMessage( const char* sender, const char* message )
 
 void Client::gotFileTransferRequest( const char* sender, const char* filename )
 {
+  // Make the run() loop to block while we're asking the user to accept or reject
+  pthread_mutex_lock( &inputMutex_ );
+
   char string[ MAX_MESSAGE_SIZE ];
   sprintf( string, "Received a request to transfer \"%s\" from %s", filename, sender );
   gotStatusMessage( string );
@@ -295,6 +309,8 @@ void Client::gotFileTransferRequest( const char* sender, const char* filename )
 
   changeStatusMessage();
   updateView();
+
+  pthread_mutex_unlock( &inputMutex_ );
 }
 
 
@@ -384,6 +400,21 @@ void Client::run()
   {
     // Get the typed character, if is there any
     int ch = getch();
+
+    // Lock the loop while there's something else grabbing input
+    int result = pthread_mutex_trylock( &inputMutex_ );
+    if( result == EBUSY )
+    {
+      Common::debug( "run() - Waiting for input lock to end" );
+      pthread_mutex_lock( &inputMutex_ );
+      pthread_mutex_unlock( &inputMutex_ );
+      Common::debug( "run() - Input lock ended" );
+      continue;
+    }
+    else if( result == 0 )
+    {
+      pthread_mutex_unlock( &inputMutex_ );
+    }
 
     // Debugging print of the keypress
     char str[ 32 ];

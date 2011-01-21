@@ -79,6 +79,8 @@ class Client
     int currentMessagePos_;
     char currentMessage_[ MAX_MESSAGE_SIZE ];
 
+    pthread_mutex_t inputMutex_;
+
     int maxX_;
     int maxY_;
 
