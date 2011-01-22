@@ -26,7 +26,11 @@ class SessionBase
 
     virtual void disconnect();
 
-    void sendMessage( Message* message );
+    /**
+     * Send a message.
+     * @return False if the queue is full
+     */
+    bool sendMessage( Message* message );
 
 
   public:
@@ -42,11 +46,24 @@ class SessionBase
     virtual void availableMessages() = 0;
 
     /**
+     * Return whether messages can be sent.
+     * @return bool
+     */
+    virtual bool canSendMessages();
+
+    /**
      * Take a message from the received message list.
      *
      * @return The next message to process, or NULL if there are none.
      */
     Message* receiveMessage();
+
+    /**
+     * Invoked every time the class does anything.
+     *
+     * This method can be used to perform extra operations at each network transfer.
+     */
+    virtual void cycle() { /* Do nothing */ };
 
 
   private:

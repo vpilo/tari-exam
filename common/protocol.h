@@ -29,9 +29,9 @@
 /**
  * @def MAX_MESSAGE_SIZE
  *
- * A message can be long at most this long.
+ * A packet containing a message can be long at most this long.
  */
-#define MAX_MESSAGE_SIZE   1024
+#define MAX_MESSAGE_SIZE   1448
 
 
 /**
@@ -56,6 +56,15 @@
  * A text message can be long at most this long.
  */
 #define MAX_CHATMESSAGE_SIZE   1024
+
+
+
+/**
+ * @def MAX_NETWORK_MESSAGE_QUEUE
+ *
+ * The OS will keep this amount of messages queued in case the server can't immediately process them.
+ */
+#define MAX_NETWORK_MESSAGE_QUEUE   40
 
 
 /**

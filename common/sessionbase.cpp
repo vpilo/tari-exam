@@ -52,6 +52,13 @@ SessionBase::~SessionBase()
 
 
 
+bool SessionBase::canSendMessages()
+{
+  return ( sendingQueue_.size() <= MAX_NETWORK_MESSAGE_QUEUE );
+}
+
+
+
 void SessionBase::disconnect()
 {
   disconnectionFlag_ = true;
@@ -237,6 +244,10 @@ void* SessionBase::pollForData( void* thisPointer )
     {
       self->disconnectionFlag_ = true;
     }
+    else if( ! self->disconnectionFlag_ )
+    {
+      self->cycle();
+    }
   }
 
   delete self;
@@ -311,9 +322,15 @@ Message* SessionBase::receiveMessage()
 
 
 
-void SessionBase::sendMessage( Message* message )
+bool SessionBase::sendMessage( Message* message )
 {
+  if( sendingQueue_.size() > MAX_NETWORK_MESSAGE_QUEUE )
+  {
+    return false;
+  }
+
   sendingQueue_.push_back( message );
+  return true;
 }
 
 
