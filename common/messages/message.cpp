@@ -53,13 +53,13 @@ const char* Message::command( Message::Type type )
   // The maximum message command is defined as COMMAND_SIZE in message.h
   switch( type )
   {
-     case Message::MSG_HELLO:          return "HELLO";
-     case Message::MSG_NICKNAME:       return "NICK";
+     case Message::MSG_HELLO:          return "HI";
+     case Message::MSG_NICKNAME:       return "NAM";
      case Message::MSG_BYE:            return "BYE";
-     case Message::MSG_STATUS:         return "STATE";
+     case Message::MSG_STATUS:         return "ST";
      case Message::MSG_CHAT:           return "MSG";
-     case Message::MSG_FILE_REQUEST:   return "FILE";
-     case Message::MSG_FILE_DATA:      return "FDATA";
+     case Message::MSG_FILE_REQUEST:   return "REQ";
+     case Message::MSG_FILE_DATA:      return "DTA";
      case Message::MSG_INVALID:
      default:
        break;

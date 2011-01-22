@@ -17,9 +17,13 @@
  *
  * Size of the command message in bytes.
  *
+ * Use powers of 2 to keep the header structure byte-aligned and therefore,
+ * to keep them better packed up through the network: compilers might add padding
+ * bytes otherwise.
+ *
  * Add one for the terminating NULL character.
  */
-#define COMMAND_SIZE  6
+#define COMMAND_SIZE  4
 
 
 /**
