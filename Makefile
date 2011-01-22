@@ -38,7 +38,8 @@ CLIENT_HEADERS = client/*.h
 LIBRARIES = -lncurses -lpthread
 
 # Default target: compiles the executable files
-all: server client
+all: $(GENERIC_SOURCES) $(GENERIC_HEADERS) client server
+	@rm -f *.log
 	@echo "Done!"
 
 # Clean up all temporary and debug files and all executables, to force the compiler to rebuild the project from scratch
@@ -48,12 +49,12 @@ clean:
 
 
 # Server
-server: $(GENERIC_SOURCES) $(GENERIC_HEADERS) $(SERVER_SOURCES) $(SERVER_HEADERS)
+server: $(SERVER_SOURCES) $(SERVER_HEADERS)
 	@echo "Building the server..."
 	g++ $(DEBUG) -o build/lanmessenger_server $(GENERIC_SOURCES) $(SERVER_SOURCES) $(SERVER_DEFINES) $(INCLUDEDIRS) $(LIBRARIES)
 
 # Client
-client: $(GENERIC_SOURCES) $(GENERIC_HEADERS) $(CLIENT_SOURCES) $(CLIENT_HEADERS)
+client: $(CLIENT_SOURCES) $(CLIENT_HEADERS)
 	@echo "Building the client..."
 	g++ $(DEBUG) -o build/lanmessenger $(GENERIC_SOURCES) $(CLIENT_SOURCES) $(CLIENT_DEFINES) $(INCLUDEDIRS) $(LIBRARIES)
 
