@@ -43,6 +43,11 @@ class ChatMessage : public Message
     const char* sender() const;
     void setSender( const char* sender );
 
+    /**
+     * Override, tells how big the message-specific payload is.
+     */
+    virtual const int size() const;
+
 
   protected:
 
@@ -50,13 +55,13 @@ class ChatMessage : public Message
      * Override, analyzes a data buffer to retrieve the specific message type's data.
      * @see Overrides::fromRawBytes()
      */
-    virtual bool fromRawBytes( const char* buffer, int size );
+    virtual bool fromRawBytes( const char* buffer, int bufferSize );
 
     /**
      * Override, convert the message contents into raw data.
      * @see Message::toRawBytes()
      */
-    virtual char* toRawBytes( int& size ) const;
+    virtual char* toRawBytes() const;
 
 
   private:

@@ -95,12 +95,19 @@ void FileTransferMessage::setSender( const char* sender )
 
 
 
-char* FileTransferMessage::toRawBytes( int& size ) const
+const int FileTransferMessage::size() const
 {
-  size = sizeof( Payload );
-  Payload* writePayload = static_cast<Payload*>( malloc( size ) );
-  memset( writePayload, '\0', size );
-  memcpy( writePayload, &payload_, size );
+  return ( sizeof( Payload ) );
+}
+
+
+
+char* FileTransferMessage::toRawBytes() const
+{
+  int payloadSize = size();
+  Payload* writePayload = static_cast<Payload*>( malloc( payloadSize ) );
+  memset( writePayload, '\0', payloadSize );
+  memcpy( writePayload, &payload_, payloadSize );
 
   return reinterpret_cast<char*>( writePayload );
 }

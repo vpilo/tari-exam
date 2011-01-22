@@ -73,11 +73,18 @@ void NicknameMessage::setNickName( const char* newNickName )
 
 
 
-char* NicknameMessage::toRawBytes( int& size ) const
+const int NicknameMessage::size() const
 {
-  size = sizeof( Payload );
-  char* buffer = static_cast<char*>( malloc( size ) );
-  memcpy( buffer, &payload_, size );
+  return ( sizeof( Payload ) );
+}
+
+
+
+char* NicknameMessage::toRawBytes() const
+{
+  int payloadSize = size();
+  char* buffer = static_cast<char*>( malloc( payloadSize ) );
+  memcpy( buffer, &payload_, payloadSize );
 
   return buffer;
 }

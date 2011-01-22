@@ -21,6 +21,7 @@ ChatMessage::ChatMessage()
 : Message( Message::MSG_CHAT )
 {
   payload_.message = NULL;
+  payload_.messageSize = 0;
   setSender( NULL );
 }
 
@@ -42,17 +43,23 @@ ChatMessage::~ChatMessage()
 
 
 
-bool ChatMessage::fromRawBytes( const char* buffer, int size )
+bool ChatMessage::fromRawBytes( const char* buffer, int bufferSize )
 {
-  int payloadSize = sizeof( Payload );
-  if( size < payloadSize )
+  int payloadSize = size();
+  if( bufferSize < payloadSize )
   {
-    Common::error( "Invalid buffer length: got %d, expected %d!", size, payloadSize );
+    Common::error( "Invalid buffer length: got %d, expected %d!", bufferSize, payloadSize );
     return false;
   }
 
   const Payload* readPayload = reinterpret_cast<const Payload*>( buffer );
   memcpy( &payload_, readPayload, payloadSize );
+
+  if( bufferSize != ( payloadSize + payload_.messageSize ) )
+  {
+    Common::error( "Invalid payload length: got %d, expected %d!", bufferSize, ( payloadSize + payload_.messageSize ) );
+    return false;
+  }
   memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
   memcpy( message_, &(readPayload->message), payload_.messageSize );
 
@@ -95,12 +102,21 @@ void ChatMessage::setSender( const char* sender )
 
 
 
-char* ChatMessage::toRawBytes( int& size ) const
+const int ChatMessage::size() const
 {
-  size = sizeof( Payload ) + payload_.messageSize;
-  Payload* writePayload = static_cast<Payload*>( malloc( size ) );
-  memset( writePayload, '\0', size );
-  memcpy( writePayload, &payload_, size );
+  // The pointer to the actual message within the payload structure
+  // is just a commodity field, and shouldn't be sent
+  return ( sizeof( Payload ) - sizeof( payload_.message ) + payload_.messageSize );
+}
+
+
+
+char* ChatMessage::toRawBytes() const
+{
+  int payloadSize = size();
+  Payload* writePayload = static_cast<Payload*>( malloc( payloadSize ) );
+  memset( writePayload, '\0', payloadSize );
+  memcpy( writePayload, &payload_, payloadSize );
   memcpy( &(writePayload->message), message_, payload_.messageSize );
 
   return reinterpret_cast<char*>( writePayload );

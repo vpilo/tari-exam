@@ -65,13 +65,20 @@ bool StatusMessage::fromRawBytes( const char* buffer, int size )
 
 
 
-char* StatusMessage::toRawBytes( int& size ) const
+const int StatusMessage::size() const
 {
-  size = sizeof( Payload );
-  char* buffer = static_cast<char*>( malloc( size ) );
-  memcpy( buffer, &payload_, size );
+  return ( sizeof( Payload ) );
+}
 
-  Common::debug( "Made status message buffer (%d bytes)", size );
+
+
+char* StatusMessage::toRawBytes() const
+{
+  int payloadSize = size();
+  char* buffer = static_cast<char*>( malloc( payloadSize ) );
+  memcpy( buffer, &payload_, payloadSize );
+
+  Common::debug( "Made message buffer for status %d (%d bytes)", payload_.status, payloadSize );
 
   return buffer;
 }

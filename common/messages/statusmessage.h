@@ -26,6 +26,11 @@ class StatusMessage : public Message
     StatusMessage( const Errors::StatusCode statusCode );
     virtual ~StatusMessage();
 
+    /**
+     * Override, tells how big the message-specific payload is.
+     */
+    virtual const int size() const;
+
     const Errors::StatusCode statusCode() const;
 
 
@@ -41,7 +46,7 @@ class StatusMessage : public Message
      * Override, convert the message contents into raw data.
      * @see Message::toRawBytes()
      */
-    virtual char* toRawBytes( int& size ) const;
+    virtual char* toRawBytes() const;
 
 
   private:

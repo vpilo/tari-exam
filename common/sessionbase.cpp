@@ -333,8 +333,8 @@ bool SessionBase::writeData()
   sendingQueue_.pop_front();
 
   // Get the message payload
-  int payloadSize = -1;
-  char* payload = message->toRawBytes( payloadSize );
+  int payloadSize = message->size();
+  char* payload = message->toRawBytes();
 
   // Generate the header
   MessageHeader header;

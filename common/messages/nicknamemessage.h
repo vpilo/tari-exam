@@ -37,6 +37,11 @@ class NicknameMessage : public Message
     const char* nickName() const;
     void setNickName( const char* newNickName );
 
+    /**
+     * Override, tells how big the message-specific payload is.
+     */
+    virtual const int size() const;
+
 
   protected:
 
@@ -50,7 +55,7 @@ class NicknameMessage : public Message
      * Override, convert the message contents into raw data.
      * @see Message::toRawBytes()
      */
-    virtual char* toRawBytes( int& size ) const;
+    virtual char* toRawBytes() const;
 
 
   private:

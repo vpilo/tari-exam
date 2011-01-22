@@ -71,10 +71,9 @@ const char* Message::command( Message::Type type )
 
 
 
-char* Message::toRawBytes( int& size ) const
+char* Message::toRawBytes() const
 {
   // Does nothing: class Message has no extra fields
-  size = 0;
   return NULL;
 }
 
@@ -83,6 +82,14 @@ bool Message::fromRawBytes( const char*, int )
 {
   // Does nothing: class Message has no extra fields
   return true;
+}
+
+
+
+const int Message::size() const
+{
+  // Does nothing: class Message has no extra fields
+  return 0;
 }
 
 

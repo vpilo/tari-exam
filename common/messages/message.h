@@ -41,6 +41,11 @@ class Message
     virtual ~Message();
     virtual bool operator==( const Message& other ) const;
 
+    /**
+     * Tells how big the message-specific payload is.
+     */
+    virtual const int size() const;
+
     Type type() const;
 
 
@@ -64,12 +69,10 @@ class Message
      * Call this to create packets to send over the network.
      *
      * @note The programmer is responsible of free()ing the buffer after its use.
-     * @param size
-     *  This will be set to the amount of bytes used by the raw message data.
      * @return
      *  Raw data buffer with the message, or NULL on error
      */
-    virtual char* toRawBytes( int& size ) const;
+    virtual char* toRawBytes() const;
 
     /**
      * Analyzes a data buffer to retrieve the specific message type's data.
