@@ -204,11 +204,11 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
 
 void Client::changeStatusMessage( const char* message, bool permanent )
 {
-  memset( statusMessage_, '\0', MAX_MESSAGE_SIZE );
+  memset( statusMessage_, '\0', MAX_CHATMESSAGE_SIZE );
 
   if( message != NULL )
   {
-    strncpy( statusMessage_, message, MAX_MESSAGE_SIZE );
+    strncpy( statusMessage_, message, MAX_CHATMESSAGE_SIZE );
   }
 
   if( permanent )
@@ -253,8 +253,8 @@ void Client::gotChatMessage( const char* sender, const char* message )
   {
     strncpy( row->sender, sender, MAX_NICKNAME_SIZE );
   }
-  memset( row->message, '\0', MAX_MESSAGE_SIZE );
-  strncpy( row->message, message, MAX_MESSAGE_SIZE );
+  memset( row->message, '\0', MAX_CHATMESSAGE_SIZE );
+  strncpy( row->message, message, MAX_CHATMESSAGE_SIZE );
   row->dateTime = time( NULL );
   row->special = false;
 
@@ -277,7 +277,7 @@ void Client::gotFileTransferRequest( const char* sender, const char* filename )
   // Make the run() loop to block while we're asking the user to accept or reject
   pthread_mutex_lock( &inputMutex_ );
 
-  char string[ MAX_MESSAGE_SIZE ];
+  char string[ MAX_CHATMESSAGE_SIZE ];
   sprintf( string, "Received a request to transfer \"%s\" from %s", filename, sender );
   gotStatusMessage( string );
 
@@ -317,7 +317,7 @@ void Client::gotFileTransferRequest( const char* sender, const char* filename )
 
 void Client::gotNicknameChange( const char* nickName )
 {
-  char string[ MAX_MESSAGE_SIZE ];
+  char string[ MAX_CHATMESSAGE_SIZE ];
   sprintf( string, "You changed your name to %s", nickName );
   gotStatusMessage( string );
 
@@ -335,8 +335,8 @@ void Client::gotStatusMessage( const char* message )
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
   strncpy( row->sender, "SERVER", MAX_NICKNAME_SIZE );
-  memset( row->message, '\0', MAX_MESSAGE_SIZE );
-  strncpy( row->message, message, MAX_MESSAGE_SIZE );
+  memset( row->message, '\0', MAX_CHATMESSAGE_SIZE );
+  strncpy( row->message, message, MAX_CHATMESSAGE_SIZE );
   row->dateTime = time( NULL );
 
   if( chatHistory_.size() > HISTORY_SIZE )
@@ -536,9 +536,9 @@ void Client::sendChatMessage( const char* message )
   row->special = false;
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
-  memset( row->message, '\0', MAX_MESSAGE_SIZE );
+  memset( row->message, '\0', MAX_CHATMESSAGE_SIZE );
   strncpy( row->sender, connection_->nickName(), MAX_NICKNAME_SIZE );
-  strncpy( row->message, message, MAX_MESSAGE_SIZE );
+  strncpy( row->message, message, MAX_CHATMESSAGE_SIZE );
   row->dateTime = time( NULL );
 
   connection_->chat( message );
@@ -581,7 +581,7 @@ void Client::updateView()
     mvaddch( lineBelow, i, '=' );
   }
 
-  char string[ MAX_MESSAGE_SIZE ];
+  char string[ MAX_CHATMESSAGE_SIZE ];
 
   // Don't expire the status message if it's permanent (value 0)
   if( statusMessageTime_ != 0 && ( time( NULL ) - statusMessageTime_ ) > STATUS_MESSAGE_TIMEOUT )

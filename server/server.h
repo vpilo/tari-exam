@@ -80,7 +80,6 @@ private:
 
   std::map<SessionClient*,SessionData*> sessions_;
 
-
 };
 
 

@@ -61,7 +61,7 @@ class Client
       struct Row
       {
         char sender[ MAX_NICKNAME_SIZE ];
-        char message[ MAX_MESSAGE_SIZE ];
+        char message[ MAX_CHATMESSAGE_SIZE ];
         time_t dateTime;
         bool incoming;
         bool special;
@@ -77,7 +77,7 @@ class Client
     pthread_t connectionThread_;
 
     int currentMessagePos_;
-    char currentMessage_[ MAX_MESSAGE_SIZE ];
+    char currentMessage_[ MAX_CHATMESSAGE_SIZE ];
 
     pthread_mutex_t inputMutex_;
 
@@ -86,7 +86,7 @@ class Client
 
     int socket_;
 
-    char statusMessage_[ MAX_MESSAGE_SIZE ];
+    char statusMessage_[ MAX_CHATMESSAGE_SIZE ];
     time_t statusMessageTime_;
 
 

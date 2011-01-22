@@ -318,7 +318,7 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
   {
     return Errors::Error_Socket_Bind;
   }
-  result = listen( listenSocket_, MAX_MESSAGE_QUEUE );
+  result = listen( listenSocket_, MAX_NETWORK_MESSAGE_QUEUE );
   if( result == -1 )
   {
     return Errors::Error_Socket_Listen;
