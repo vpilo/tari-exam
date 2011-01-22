@@ -13,6 +13,8 @@
 
 #include "sessionbase.h"
 
+#include <stdio.h>
+
 
 class Client;
 
@@ -34,6 +36,7 @@ class SessionServer : public SessionBase
     void chat( const char* message );
     virtual void disconnect();
     bool hasFileTransfer() const;
+    const char* fileTransferName() const;
     const char* nickName() const;
     void setNickName( const char* nickName );
     void sendFile( const char* fileName );
@@ -42,6 +45,8 @@ class SessionServer : public SessionBase
   private:
 
     virtual void availableMessages();
+    virtual void cycle();
+    void disableFileTransferMode(  );
 
 
   private:
@@ -49,7 +54,11 @@ class SessionServer : public SessionBase
     /// Pointer to the parent client
     Client* client_;
 
+    FILE* fileTransferHandle_;
+    unsigned long long fileTransferOffset_;
     bool hasFileTransfer_;
+    bool hasFileTransferStarted_;
+    char fileTransferBuffer_[ MAX_MESSAGE_SIZE ];
 
     char fileName_[ MAX_PATH_SIZE ];
 

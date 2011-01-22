@@ -12,6 +12,7 @@
 
 #include "chatmessage.h"
 #include "filetransfermessage.h"
+#include "statusmessage.h"
 #include "common.h"
 #include "errors.h"
 #include "sessionclient.h"
@@ -26,17 +27,9 @@
 
 
 
-/**
- * @def MAX_MESSAGE_QUEUE
- *
- * The OS will keep this amount of messages queued in case the server can't immediately process them.
- */
-#define MAX_MESSAGE_QUEUE   40
-
-
-
 Server::Server()
 : connectionsCounter_( 0 )
+, fileTransferModeActive_( false )
 , listenThread_( 0 )
 {
   int result = pthread_mutex_init( &accessMutex_, NULL );
@@ -78,6 +71,7 @@ void Server::addSession( int newSocket )
   SessionData* newSession = new SessionData;
   newSession->client = new SessionClient( this, newSocket );
   newSession->state = CLIENT_STATE_START;
+  newSession->isFileTransferSender = false;
 
   // Assign a default unique name to the client
   char nickName[ MAX_NICKNAME_SIZE ];
@@ -227,7 +221,7 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
 
 
 
-bool Server::clientSentFileTransferMessage( SessionClient* client, const char* filePath )
+bool Server::clientSentFileTransferRequest( SessionClient* client, const char* filePath )
 {
   SessionData* current = findSession( client );
   if( ! current )
@@ -240,6 +234,9 @@ bool Server::clientSentFileTransferMessage( SessionClient* client, const char* f
   {
     return false;
   }
+
+  // Enable the file transfer
+  fileTransferModeActive_ = true;
 
   const char* fileName = basename( filePath );
 
@@ -260,6 +257,76 @@ bool Server::clientSentFileTransferMessage( SessionClient* client, const char* f
     FileTransferMessage* message = new FileTransferMessage( fileName );
     message->setSender( client->nickName() );
     peer->sendMessage( message );
+  }
+
+  // Allow to identify the initial sender
+  current->isFileTransferSender = true;
+
+  return true;
+}
+
+
+
+bool Server::clientSentFileTransferResponse( SessionClient* client, bool accept )
+{
+  SessionData* current = findSession( client );
+  if( ! current )
+  {
+    Common::fatal( "Received a message from unknown session 0x%X!", client );
+  }
+
+  // The user is alone by him/herself in chat
+  if( sessions_.size() == 1 )
+  {
+    return false;
+  }
+
+  Common::debug( "Checking whether the transfer can be started" );
+
+  // If all clients have confirmed, allow the sender to start transmitting the file
+  bool allClientsConfirmed = true;
+  bool canStart = false;
+  SessionClient* sender = 0;
+
+  std::map<SessionClient*,SessionData*>::iterator it;
+  for( it = sessions_.begin(); it != sessions_.end(); it++ )
+  {
+    SessionClient* peer = (*it).first;
+    SessionData* peerData = (*it).second;
+
+    // Don't send back the same message
+    if( peer == client )
+    {
+      continue;
+    }
+
+    if( peer->fileTransferAccepted() == Errors::Status_FileTransferCanceled )
+    {
+      allClientsConfirmed = false;
+      break;
+    }
+
+    if( peer->fileTransferAccepted() == Errors::Status_AcceptFileTransfer )
+    {
+      canStart = true;
+    }
+
+    if( peerData->isFileTransferSender )
+    {
+      sender = peer;
+    }
+  }
+
+  Common::debug( "All clients have confirmed? %s. Can the FT start? %s. Is sender set? %s",
+                 allClientsConfirmed ? "yes" : "no",
+                 canStart ? "yes" : "no",
+                 sender ? "yes" : "no" );
+
+  // Send the file transfer initiator the OK to send the file,
+  // if everybody has answered the request and at least one has said yes
+  if( allClientsConfirmed && canStart && sender )
+  {
+    sender->sendMessage( new StatusMessage( Errors::Status_AcceptFileTransfer ) );
   }
 
   return true;
@@ -332,6 +399,13 @@ Errors::ErrorCode Server::initialize( const char* address, const int port )
 
 
 
+bool Server::isFileTransferModeActive()
+{
+  return fileTransferModeActive_;
+}
+
+
+
 void Server::removeSession( SessionClient* client )
 {
   pthread_mutex_lock( &accessMutex_ );
@@ -343,6 +417,24 @@ void Server::removeSession( SessionClient* client )
     Common::fatal( "Received a session state change from unknown session 0x%X!", client );
   }
 
+  // If the client was sending out a file, cancel the transfer for everybody else
+  if( fileTransferModeActive_ && current->isFileTransferSender )
+  {
+    fileTransferModeActive_ = false;
+
+    std::map<SessionClient*,SessionData*>::iterator it;
+    for( it = sessions_.begin(); it != sessions_.end(); it++ )
+    {
+      SessionClient* peer = (*it).first;
+
+      if( peer == client )
+      {
+        continue;
+      }
+
+      client->sendMessage( new StatusMessage( Errors::Status_FileTransferCanceled ) );
+    }
+  }
   sessions_.erase( client );
 
   Common::debug( "Session \"%s\" ended, %lu remaining", current->client->nickName(), sessions_.size() );

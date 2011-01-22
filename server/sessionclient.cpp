@@ -25,6 +25,7 @@
 
 SessionClient::SessionClient( Server* parent, const int socket )
 : SessionBase( socket )
+, fileTransferStatus_( Errors::Status_FileTransferCanceled )
 , server_( parent )
 {
 }
@@ -77,10 +78,30 @@ void SessionClient::availableMessages()
         StatusMessage* statusMessage = dynamic_cast<StatusMessage*>( message );
         Common::debug( "The client reports status code %d", statusMessage->statusCode() );
 
-        if( statusMessage->statusCode() != Errors::Status_Ok )
+        Errors::StatusCode code = statusMessage->statusCode();
+        switch( code )
         {
-          /// TODO Parse the error message
-          Common::error( "Error!" );
+          case Errors::Status_Ok:
+            Common::debug( "Session \"%s\" sent status OK", nickName_ );
+            break;
+
+          case Errors::Status_AcceptFileTransfer:
+          case Errors::Status_RejectFileTransfer:
+            if( ! server_->isFileTransferModeActive() )
+            {
+              sendMessage( new StatusMessage( Errors::Status_FileTransferCanceled ) );
+              break;
+            }
+
+            // Save the status
+            fileTransferStatus_ = code;
+
+            server_->clientSentFileTransferResponse( this, code == Errors::Status_AcceptFileTransfer );
+            break;
+
+          default:
+            Common::debug( "Session \"%s\" sent status %d", nickName_, code );
+            break;
         }
         break;
       }
@@ -97,11 +118,21 @@ void SessionClient::availableMessages()
 
       case Message::MSG_FILE_REQUEST:
       {
+        // Deny new file transfers if one is already active
+        if( server_->isFileTransferModeActive() )
+        {
+          sendMessage( new StatusMessage( Errors::Status_FileTransferCanceled ) );
+          break;
+        }
+
         FileTransferMessage* fileMessage = dynamic_cast<FileTransferMessage*>( message );
-        if( ! server_->clientSentFileTransferMessage( this, fileMessage->fileName() ) )
+        if( ! server_->clientSentFileTransferRequest( this, fileMessage->fileName() ) )
         {
           sendMessage( new StatusMessage( Errors::Status_ChattingAlone ) );
+          break;
         }
+
+        fileTransferStatus_ = Errors::Status_AcceptFileTransfer;
         break;
       }
 
@@ -111,6 +142,13 @@ void SessionClient::availableMessages()
 
     delete message;
   }
+}
+
+
+
+Errors::StatusCode SessionClient::fileTransferAccepted() const
+{
+  return fileTransferStatus_;
 }
 
 

@@ -11,6 +11,7 @@
 #ifndef SESSIONCLIENT_H
 #define SESSIONCLIENT_H
 
+#include "errors.h"
 #include "sessionbase.h"
 
 
@@ -31,6 +32,8 @@ class SessionClient : public SessionBase
     SessionClient( Server* parent, const int socket );
     virtual ~SessionClient();
 
+    Errors::StatusCode fileTransferAccepted() const;
+
     const char* nickName() const;
     void setNickName( const char* newNickName );
 
@@ -41,6 +44,8 @@ class SessionClient : public SessionBase
 
 
   private:
+
+    Errors::StatusCode fileTransferStatus_;
 
     char nickName_[ MAX_NICKNAME_SIZE ];
 

@@ -36,6 +36,7 @@ class Errors
     , Status_NickNameAlreadyRegistered
     , Status_AcceptFileTransfer
     , Status_RejectFileTransfer
+    , Status_FileTransferCanceled
     };
 
 

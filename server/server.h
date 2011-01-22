@@ -39,8 +39,10 @@ public:
 
     bool clientChangedNickName( SessionClient* client, const char* newNickName );
     bool clientSentChatMessage( SessionClient* client, const char* chatMessage );
-    bool clientSentFileTransferMessage( SessionClient* client, const char* filePath );
+    bool clientSentFileTransferRequest( SessionClient* client, const char* filePath );
+    bool clientSentFileTransferResponse( SessionClient* client, bool accept );
 
+    bool isFileTransferModeActive();
 
 private:
 
@@ -58,6 +60,7 @@ private:
     SessionClient* client;
     pthread_t thread;
     ClientState state;
+    bool isFileTransferSender;
   };
 
 
@@ -71,6 +74,8 @@ private:
 private:
 
   int connectionsCounter_;
+
+  bool fileTransferModeActive_;
 
   int listenSocket_;
 

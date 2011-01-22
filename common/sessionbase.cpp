@@ -16,6 +16,7 @@
 
 #include "byemessage.h"
 #include "chatmessage.h"
+#include "filedatamessage.h"
 #include "filetransfermessage.h"
 #include "hellomessage.h"
 #include "nicknamemessage.h"
@@ -122,6 +123,9 @@ Message* SessionBase::parseMessage()
       break;
     case Message::MSG_FILE_REQUEST:
       message = new FileTransferMessage();
+      break;
+    case Message::MSG_FILE_DATA:
+      message = new FileDataMessage();
       break;
     default:
       Common::error( "Could not create the message. Invalid type %d", type );
