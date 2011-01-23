@@ -235,6 +235,52 @@ bool Server::clientSentChatMessage( SessionClient* client, const ChatMessage* me
 
 
 
+void Server::clientSentFileData( SessionClient* client, const FileDataMessage* message )
+{
+  SessionData* current = findSession( client );
+  if( ! current )
+  {
+    Common::fatal( "Received a message from unknown session 0x%X!", client );
+  }
+
+  // The user is alone by him/herself in chat
+  if( sessions_.size() == 1 )
+  {
+    return;
+  }
+
+  // Send the same message to everybody but the sender
+  std::map<SessionClient*,SessionData*>::iterator it;
+  for( it = sessions_.begin(); it != sessions_.end(); it++ )
+  {
+    SessionClient* peer = (*it).first;
+
+    // Don't send back the same message
+    if( peer == client )
+    {
+      continue;
+    }
+
+    FileDataMessage* dataMessage = new FileDataMessage();
+    dataMessage->setBuffer( message->buffer(), message->bufferSize() );
+    dataMessage->setFileOffset( message->fileOffset() );
+    if( message->isLastBlock() )
+    {
+      dataMessage->markLastBlock();
+    }
+
+    peer->sendMessage( dataMessage );
+  }
+
+  if( message->isLastBlock() )
+  {
+    current->isFileTransferSender = false;
+    fileTransferModeActive_ = false;
+  }
+}
+
+
+
 bool Server::clientSentFileTransferRequest( SessionClient* client, const FileTransferMessage* message )
 {
   SessionData* current = findSession( client );

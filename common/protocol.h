@@ -31,7 +31,7 @@
  *
  * A packet containing a message can be long at most this long.
  */
-#define MAX_MESSAGE_SIZE   1448
+#define MAX_MESSAGE_SIZE   65495
 
 
 /**

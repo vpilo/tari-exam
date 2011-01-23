@@ -50,7 +50,7 @@ const int FileDataMessage::bufferSize() const
 
 
 
-const unsigned long long FileDataMessage::fileOffset() const
+const long FileDataMessage::fileOffset() const
 {
   return payload_.offset;
 }
@@ -62,36 +62,16 @@ bool FileDataMessage::fromRawBytes( const char* buffer, int bufferSize )
   int payloadSize = size();
   if( bufferSize < payloadSize )
   {
-//     Common::error( "Invalid buffer length: got %d, expected %d!", size, payloadSize );
-    return true;
-  }
-
-  const Payload* readPayload = reinterpret_cast<const Payload*>( buffer );
-  memcpy( &payload_, readPayload, payloadSize );
-//   memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
-//   memcpy( message_, &(readPayload->message), payload_.messageSize );
-
-/*
-  int payloadSize = size();
-  if( bufferSize < payloadSize )
-  {
-    Common::error( "Invalid buffer length: got %d, expected %d!", bufferSize, payloadSize );
+    Common::error( "Invalid buffer length: got %d, expected a minimum of %d!", bufferSize, payloadSize );
     return false;
   }
 
   const Payload* readPayload = reinterpret_cast<const Payload*>( buffer );
   memcpy( &payload_, readPayload, payloadSize );
 
-  if( bufferSize != ( payloadSize + payload_.messageSize ) )
-  {
-    Common::error( "Invalid payload length: got %d, expected %d!", bufferSize, ( payloadSize + payload_.messageSize ) );
-    return false;
-  }
-  memset( message_, '\0', MAX_CHATMESSAGE_SIZE );
-  memcpy( message_, &(readPayload->message), payload_.messageSize );
-
-  return true;
-*/
+  payload_.data = static_cast<char*>( malloc( payload_.size ) );
+  memset( payload_.data, '\0', payload_.size );
+  memcpy( payload_.data, &(readPayload->data), payload_.size );
 
   return true;
 }
@@ -123,7 +103,7 @@ void FileDataMessage::setBuffer( const char* buffer, const int size )
 
 
 
-void FileDataMessage::setFileOffset( const unsigned long long offset )
+void FileDataMessage::setFileOffset( const long offset )
 {
   payload_.offset = offset;
 }
@@ -147,20 +127,6 @@ char* FileDataMessage::toRawBytes() const
   memcpy( writePayload, &payload_, payloadSize );
   memcpy( &(writePayload->data), payload_.data, payload_.size );
 
-  Common::debug( "Message: Copied %d chars from offset %lu, last? %s", payload_.size, payload_.offset, ( payload_.isLast < MAX_MESSAGE_SIZE )?"yes":"no" );
-  /*
-  memset(&payload_, '\x00', sizeof( payload_ ));
-  memset(&payload_.offset, '\xDD', sizeof( payload_.offset ));
-  memset(&payload_.isLast, '\xCC', sizeof( payload_.isLast ));
-  memset(&payload_.size, '\xEE', sizeof( payload_.size ));
-  memset(&payload_.data, '\xFF', sizeof( payload_.data ));
-  Common::debug( "raw payload size is: %d", size() );
-  Common::printData( (char*)&payload_, size() );
-******************************************************************************
-00000 : dd dd dd dd dd dd dd dd cc 00 00 00 ee ee ee ee : ................
-00016 : ff ff ff ff ff ff ff ff                         : ........
-******************************************************************************
-*/
   return reinterpret_cast<char*>( writePayload );
 }
 

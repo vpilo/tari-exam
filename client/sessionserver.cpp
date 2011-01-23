@@ -31,7 +31,8 @@ SessionServer::SessionServer( Client* parent, const int socket )
 , client_( parent )
 , fileTransferHandle_( NULL )
 , fileTransferOffset_( 0LL )
-, hasFileTransfer_( false )
+, isReceivingFile_( false )
+, isSendingFile_( false )
 , hasFileTransferStarted_( false )
 {
   *fileName_ = '\0';
@@ -74,22 +75,33 @@ void SessionServer::availableMessages()
 
           case Errors::Status_AcceptFileTransfer:
 
-            if( ! hasFileTransfer_ || strlen( fileName_ ) == 0 )
+            if( ! isSendingFile_ || strlen( fileName_ ) == 0 )
             {
-              Common::fatal( "Client doesn't have a file transfer to accept!" );
+              Common::fatal( "Client doesn't have started a file transfer!" );
             }
 
+            hasFileTransferStarted_ = true; // let cycle() go
             client_->gotStatusMessage( "Started to transfer the file." );
-            hasFileTransferStarted_ = true;
+            break;
+
+          case Errors::Status_RejectFileTransfer:
+
+            if( ! isSendingFile_ || strlen( fileName_ ) == 0 )
+            {
+              Common::fatal( "Client doesn't have started a file transfer!" );
+            }
+
+            disableFileTransferMode();
+            client_->gotStatusMessage( "The file transfer was rejected by the other participants." );
             break;
 
           case Errors::Status_FileTransferCanceled:
-            if( ! hasFileTransfer_ )
+            if( ! isSendingFile_ )
             {
-              Common::fatal( "Client doesn't have a file transfer!" );
+              Common::fatal( "Client doesn't have started a file transfer!" );
             }
 
-            hasFileTransfer_ = false;
+            disableFileTransferMode();
             client_->gotStatusMessage( "Unable to send the file! Only one file may be in transfer at a time." );
             break;
 
@@ -125,8 +137,30 @@ void SessionServer::availableMessages()
         FileTransferMessage* fileMessage = dynamic_cast<FileTransferMessage*>( message );
 
         Common::debug( "Got file transfer request by '%s': %s", fileMessage->sender(), fileMessage->fileName() );
-        hasFileTransfer_ = true;
-        client_->gotFileTransferRequest( fileMessage->sender(),fileMessage->fileName() );
+
+        bool accepted = client_->gotFileTransferRequest( fileMessage->sender(),fileMessage->fileName(), fileName_ );
+        isReceivingFile_ = accepted;
+
+        Common::debug( "File transfer %s", accepted ? "accepted" : "rejected" );
+        break;
+      }
+
+      case Message::MSG_FILE_DATA:
+      {
+        // We had ignored the file request
+        if( ! isReceivingFile_ )
+        {
+          break;
+        }
+
+        FileDataMessage* dataMessage = dynamic_cast<FileDataMessage*>( message );
+        saveData( dataMessage->buffer(), dataMessage->bufferSize(), dataMessage->fileOffset() );
+
+        if( dataMessage->isLastBlock() )
+        {
+          disableFileTransferMode();
+          client_->gotStatusMessage( "Received the file." );
+        }
         break;
       }
 
@@ -149,7 +183,7 @@ void SessionServer::chat( const char* message )
 
 void SessionServer::cycle()
 {
-  if( ! hasFileTransfer_ || ! hasFileTransferStarted_ )
+  if( ! isSendingFile_ || ! hasFileTransferStarted_ )
   {
     return;
   }
@@ -220,8 +254,15 @@ void SessionServer::disableFileTransferMode()
 
   // Reset the state variables
 
+  if( fileTransferHandle_ != NULL )
+  {
+    fclose( fileTransferHandle_ );
+    fileTransferHandle_ = NULL;
+  }
+
   fileTransferOffset_ = 0;
-  hasFileTransfer_ = false;
+  isReceivingFile_ = false;
+  isSendingFile_ = false;
   hasFileTransferStarted_ = false;
   *fileName_ = '\0';
 }
@@ -245,7 +286,7 @@ const char* SessionServer::fileTransferName() const
 
 bool SessionServer::hasFileTransfer() const
 {
-  return hasFileTransfer_;
+  return ( isReceivingFile_ || isSendingFile_ );
 }
 
 
@@ -257,9 +298,40 @@ const char* SessionServer::nickName() const
 
 
 
+void SessionServer::saveData( const char* buffer, int size, long offset )
+{
+  if( ! isReceivingFile_ )
+  {
+    return;
+  }
+
+  if( fileTransferHandle_ == NULL )
+  {
+    fileTransferHandle_ = fopen( fileName_, "w" );
+
+    if( fileTransferHandle_ == NULL )
+    {
+      // Opening the file failed somehow
+      Common::error( "Couldn't open %s: %s", fileName_, strerror( errno ) );
+      char message[ MAX_CHATMESSAGE_SIZE ];
+      sprintf( message, "Unable to open file %s! %s", fileName_, strerror( errno ) );
+      client_->gotStatusMessage( message );
+      disableFileTransferMode();
+      return;
+    }
+  }
+
+  fseek( fileTransferHandle_, offset, SEEK_SET );
+  fwrite( buffer, size, 1, fileTransferHandle_ );
+
+  Common::debug( "File: Saved %d chars at offset %ld", size, offset );
+}
+
+
+
 void SessionServer::sendFile( const char* fileName )
 {
-  hasFileTransfer_ = true;
+  isSendingFile_ = true;
   strncpy( fileName_, fileName, MAX_PATH_SIZE );
 
   sendMessage( new FileTransferMessage( fileName ) );

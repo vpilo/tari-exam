@@ -280,10 +280,11 @@ void Client::gotChatMessage( const char* sender, const char* message )
 
 
 
-void Client::gotFileTransferRequest( const char* sender, const char* filename )
+bool Client::gotFileTransferRequest( const char* sender, const char* filename, char* targetFileName )
 {
   // Make the run() loop to block while we're asking the user to accept or reject
   pthread_mutex_lock( &inputMutex_ );
+  ungetch( 0 ); // force the run() loop to get to the lock
 
   char string[ MAX_CHATMESSAGE_SIZE ];
   sprintf( string, "Received a request to transfer \"%s\" from %s", filename, sender );
@@ -308,6 +309,20 @@ void Client::gotFileTransferRequest( const char* sender, const char* filename )
     answered = ( accept || ( strcasecmp( acceptStr, "n" ) == 0 ) );
   }
 
+  // Ask the path where to put the saved file
+  if( accept )
+  {
+    // Put the sender's file name as the default answer
+    strcpy( targetFileName, filename );
+
+    answered = false;
+    sprintf( string, "Please enter a name for the saved file:"  );
+    if( ! askQuestion( string, targetFileName, MAX_PATH_SIZE ) )
+    {
+      accept = false;
+    }
+  }
+
   Errors::StatusCode status = ( accept ? Errors::Status_AcceptFileTransfer
                                        : Errors::Status_RejectFileTransfer );
 
@@ -320,6 +335,7 @@ void Client::gotFileTransferRequest( const char* sender, const char* filename )
   updateView();
 
   pthread_mutex_unlock( &inputMutex_ );
+  return accept;
 }
 
 

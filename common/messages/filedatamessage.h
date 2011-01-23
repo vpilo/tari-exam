@@ -26,12 +26,12 @@ class FileDataMessage : public Message
 
     const char* buffer() const;
     const int bufferSize() const;
-    const unsigned long long fileOffset() const;
+    const long fileOffset() const;
     const bool isLastBlock() const;
 
     void markLastBlock();
     void setBuffer( const char* buffer, const int size );
-    void setFileOffset( const unsigned long long offset );
+    void setFileOffset( const long offset );
 
     /**
      * Override, tells how big the message-specific payload is.
@@ -58,7 +58,7 @@ class FileDataMessage : public Message
 
     struct Payload
     {
-      unsigned long long offset;
+      long offset;
       bool isLast;
       int size;
       char* data;

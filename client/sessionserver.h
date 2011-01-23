@@ -39,6 +39,7 @@ class SessionServer : public SessionBase
     const char* fileTransferName() const;
     const char* nickName() const;
     void setNickName( const char* nickName );
+    void saveData( const char* buffer, int size, long int offset );
     void sendFile( const char* fileName );
 
 
@@ -56,7 +57,8 @@ class SessionServer : public SessionBase
 
     FILE* fileTransferHandle_;
     unsigned long long fileTransferOffset_;
-    bool hasFileTransfer_;
+    bool isReceivingFile_;
+    bool isSendingFile_;
     bool hasFileTransferStarted_;
     char fileTransferBuffer_[ MAX_MESSAGE_SIZE ];
 

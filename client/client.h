@@ -47,7 +47,7 @@ class Client
     void connectionClosed( SessionServer* connection );
 
     void gotChatMessage( const char* sender, const char* message );
-    void gotFileTransferRequest( const char* sender, const char* filename );
+    bool gotFileTransferRequest( const char* sender, const char* filename, char* targetFileName );
     void gotNicknameChange( const char* nickName );
     void gotStatusMessage( const char* message );
     void run();

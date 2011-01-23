@@ -15,6 +15,7 @@
 #include "server.h"
 
 #include "chatmessage.h"
+#include "filedatamessage.h"
 #include "filetransfermessage.h"
 #include "statusmessage.h"
 #include "nicknamemessage.h"
@@ -133,6 +134,20 @@ void SessionClient::availableMessages()
         }
 
         fileTransferStatus_ = Errors::Status_AcceptFileTransfer;
+        break;
+      }
+
+      case Message::MSG_FILE_DATA:
+      {
+        FileDataMessage* dataMessage = dynamic_cast<FileDataMessage*>( message );
+
+        server_->clientSentFileData( this, dataMessage );
+
+        // Reset the file transfer status for the next file
+        if( dataMessage->isLastBlock() )
+        {
+          fileTransferStatus_ = Errors::Status_FileTransferCanceled;
+        }
         break;
       }
 

@@ -44,6 +44,7 @@ public:
 
     bool clientChangedNickName( SessionClient* client, const NicknameMessage* message );
     bool clientSentChatMessage( SessionClient* client, const ChatMessage* message );
+    void clientSentFileData( SessionClient* client, const FileDataMessage* message );
     bool clientSentFileTransferRequest( SessionClient* client, const FileTransferMessage* message );
     bool clientSentFileTransferResponse( SessionClient* client, bool accept );
 
