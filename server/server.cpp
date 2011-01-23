@@ -11,7 +11,9 @@
 #include "server.h"
 
 #include "chatmessage.h"
+#include "filedatamessage.h"
 #include "filetransfermessage.h"
+#include "nicknamemessage.h"
 #include "statusmessage.h"
 #include "common.h"
 #include "errors.h"
@@ -20,6 +22,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <ctype.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -135,7 +138,7 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
 
   if( std::find( expectedStates.begin(), expectedStates.end(), current->state ) == expectedStates.end() )
   {
-    Common::error( "Session \"%s\" sent a wrong state message of type %d", current->client->nickName(), messageType );
+    Common::error( "Session \"%s\" sent a wrong state message of type %d", client->nickName(), messageType );
     client->disconnect();
     return;
   }
@@ -146,17 +149,25 @@ void Server::checkSessionStateChange( SessionClient* client, Message::Type messa
   }
 
   current->state = nextState;
-  Common::debug( "Session \"%s\" changed state to %d", current->client->nickName(), nextState );
+  Common::debug( "Session \"%s\" changed state to %d", client->nickName(), nextState );
 }
 
 
 
-bool Server::clientChangedNickName( SessionClient* client, const char* newNickName )
+bool Server::clientChangedNickName( SessionClient* client, const NicknameMessage* message )
 {
   SessionData* current = findSession( client );
   if( ! current )
   {
     Common::fatal( "Received a message from unknown session 0x%X!", client );
+  }
+
+  // Remove non-printable chars from the name
+  const char* newNickName = message->nickName();
+  char verifiedNickName[ MAX_NICKNAME_SIZE ];
+  for( uint i = 0; i <= strlen( newNickName ); i++ )
+  {
+    verifiedNickName[ i ] = isprint( newNickName[ i ] ) ? newNickName[ i ] : ' ';
   }
 
   // Check if the new name is unique
@@ -170,7 +181,7 @@ bool Server::clientChangedNickName( SessionClient* client, const char* newNickNa
         continue;
     }
 
-    if( strcasecmp( newNickName, peer->nickName() ) == 0 )
+    if( strcasecmp( verifiedNickName, peer->nickName() ) == 0 )
     {
       return false;
     }
@@ -183,7 +194,7 @@ bool Server::clientChangedNickName( SessionClient* client, const char* newNickNa
 
 
 
-bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessage )
+bool Server::clientSentChatMessage( SessionClient* client, const ChatMessage* message )
 {
   SessionData* current = findSession( client );
   if( ! current )
@@ -197,7 +208,10 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
     return false;
   }
 
-  Common::debug( "Session \"%s\" sent message \"%s\"", client->nickName(), chatMessage );
+  const char* chatMessage = message->message();
+  const char* sender = client->nickName();
+
+  Common::debug( "Session \"%s\" sent message \"%s\"", sender, chatMessage );
 
   // Send the same message to everybody but the sender
   std::map<SessionClient*,SessionData*>::iterator it;
@@ -211,9 +225,9 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
       continue;
     }
 
-    ChatMessage* message = new ChatMessage( chatMessage );
-    message->setSender( client->nickName() );
-    peer->sendMessage( message );
+    ChatMessage* newMessage = new ChatMessage( chatMessage );
+    newMessage->setSender( sender );
+    peer->sendMessage( newMessage );
   }
 
   return true;
@@ -221,7 +235,7 @@ bool Server::clientSentChatMessage( SessionClient* client, const char* chatMessa
 
 
 
-bool Server::clientSentFileTransferRequest( SessionClient* client, const char* filePath )
+bool Server::clientSentFileTransferRequest( SessionClient* client, const FileTransferMessage* message )
 {
   SessionData* current = findSession( client );
   if( ! current )
@@ -238,9 +252,11 @@ bool Server::clientSentFileTransferRequest( SessionClient* client, const char* f
   // Enable the file transfer
   fileTransferModeActive_ = true;
 
+  const char* filePath = message->fileName();
   const char* fileName = basename( filePath );
+  const char* sender = client->nickName();
 
-  Common::debug( "Session \"%s\" wants to send file \"%s\"", client->nickName(), fileName );
+  Common::debug( "Session \"%s\" wants to send file \"%s\"", sender, fileName );
 
   // Send the same message to everybody but the sender
   std::map<SessionClient*,SessionData*>::iterator it;
@@ -254,9 +270,9 @@ bool Server::clientSentFileTransferRequest( SessionClient* client, const char* f
       continue;
     }
 
-    FileTransferMessage* message = new FileTransferMessage( fileName );
-    message->setSender( client->nickName() );
-    peer->sendMessage( message );
+    FileTransferMessage* transferMessage = new FileTransferMessage( fileName );
+    transferMessage->setSender( sender );
+    peer->sendMessage( transferMessage );
   }
 
   // Allow to identify the initial sender
@@ -324,9 +340,18 @@ bool Server::clientSentFileTransferResponse( SessionClient* client, bool accept 
 
   // Send the file transfer initiator the OK to send the file,
   // if everybody has answered the request and at least one has said yes
-  if( allClientsConfirmed && canStart && sender )
+  if( allClientsConfirmed && sender )
   {
-    sender->sendMessage( new StatusMessage( Errors::Status_AcceptFileTransfer ) );
+    Errors::StatusCode code;
+    if( canStart )
+    {
+      code = Errors::Status_AcceptFileTransfer;
+    }
+    else
+    {
+      code = Errors::Status_RejectFileTransfer;
+    }
+    sender->sendMessage( new StatusMessage( code ) );
   }
 
   return true;

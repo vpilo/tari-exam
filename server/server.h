@@ -21,6 +21,11 @@
 #include <map>
 
 
+class ChatMessage;
+class FileDataMessage;
+class FileTransferMessage;
+class NicknameMessage;
+
 class SessionClient;
 
 
@@ -37,9 +42,9 @@ public:
     void removeSession( SessionClient* client );
     void checkSessionStateChange( SessionClient* client, Message::Type messageType );
 
-    bool clientChangedNickName( SessionClient* client, const char* newNickName );
-    bool clientSentChatMessage( SessionClient* client, const char* chatMessage );
-    bool clientSentFileTransferRequest( SessionClient* client, const char* filePath );
+    bool clientChangedNickName( SessionClient* client, const NicknameMessage* message );
+    bool clientSentChatMessage( SessionClient* client, const ChatMessage* message );
+    bool clientSentFileTransferRequest( SessionClient* client, const FileTransferMessage* message );
     bool clientSentFileTransferResponse( SessionClient* client, bool accept );
 
     bool isFileTransferModeActive();

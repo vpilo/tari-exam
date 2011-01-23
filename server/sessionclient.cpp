@@ -58,7 +58,7 @@ void SessionClient::availableMessages()
       case Message::MSG_NICKNAME:
       {
         NicknameMessage* nickNameMessage = dynamic_cast<NicknameMessage*>( message );
-        if( ! server_->clientChangedNickName( this, nickNameMessage->nickName() ) )
+        if( ! server_->clientChangedNickName( this, nickNameMessage ) )
         {
           // The nickname could not be changed, report the problem to the client
           sendMessage( new StatusMessage( Errors::Status_NickNameAlreadyRegistered ) );
@@ -109,7 +109,7 @@ void SessionClient::availableMessages()
       case Message::MSG_CHAT:
       {
         ChatMessage* chatMessage = dynamic_cast<ChatMessage*>( message );
-        if( ! server_->clientSentChatMessage( this, chatMessage->message() ) )
+        if( ! server_->clientSentChatMessage( this, chatMessage ) )
         {
           sendMessage( new StatusMessage( Errors::Status_ChattingAlone ) );
         }
@@ -126,7 +126,7 @@ void SessionClient::availableMessages()
         }
 
         FileTransferMessage* fileMessage = dynamic_cast<FileTransferMessage*>( message );
-        if( ! server_->clientSentFileTransferRequest( this, fileMessage->fileName() ) )
+        if( ! server_->clientSentFileTransferRequest( this, fileMessage ) )
         {
           sendMessage( new StatusMessage( Errors::Status_ChattingAlone ) );
           break;
