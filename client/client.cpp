@@ -287,10 +287,9 @@ bool Client::gotFileTransferRequest( const char* sender, const char* filename, c
   ungetch( 0 ); // force the run() loop to get to the lock
 
   char string[ MAX_CHATMESSAGE_SIZE ];
-  sprintf( string, "Received a request to transfer \"%s\" from %s", filename, sender );
-  gotStatusMessage( string );
+  gotStatusMessage( "Received a request to transfer \"%s\" from \"%s\"", filename, sender );
 
-  sprintf( string, "Do you want to accept the file \"%s\" from %s? [Y/n]", filename, sender );
+  sprintf( string, "Do you want to accept the file \"%s\" from \"%s\"? [Y/n]", filename, sender );
 
   bool accept = false;
   bool answered = false;
@@ -328,8 +327,7 @@ bool Client::gotFileTransferRequest( const char* sender, const char* filename, c
 
   connection_->sendMessage( new StatusMessage( status ) );
 
-  sprintf( string, "File transfer request %s.", ( accept ? "accepted" : "rejected" ) );
-  gotStatusMessage( string );
+  gotStatusMessage( "File transfer request %s.", accept ? "accepted" : "rejected" );
 
   changeStatusMessage();
   updateView();
@@ -342,9 +340,7 @@ bool Client::gotFileTransferRequest( const char* sender, const char* filename, c
 
 void Client::gotNicknameChange( const char* nickName )
 {
-  char string[ MAX_CHATMESSAGE_SIZE ];
-  sprintf( string, "You changed your name to %s", nickName );
-  gotStatusMessage( string );
+  gotStatusMessage( "Your nickname is now \"%s\"", nickName );
 
   changeStatusMessage();
   updateView();
@@ -352,16 +348,24 @@ void Client::gotNicknameChange( const char* nickName )
 
 
 
-void Client::gotStatusMessage( const char* message )
+void Client::gotStatusMessage( const char* format, ... )
 {
+  char statusMessage[ MAX_CHATMESSAGE_SIZE ];
+  va_list args;
+
+  // Get all the parameters that have been passed to this function
+  va_start( args, format );
+  vsprintf( statusMessage, format, args );
+  va_end( args );
+
+
   Row* row = new Row();
   row->incoming = true;
   row->special = true;
 
   memset( row->sender, '\0', MAX_NICKNAME_SIZE );
   strncpy( row->sender, "SERVER", MAX_NICKNAME_SIZE );
-  memset( row->message, '\0', MAX_CHATMESSAGE_SIZE );
-  strncpy( row->message, message, MAX_CHATMESSAGE_SIZE );
+  strncpy( row->message, statusMessage, MAX_CHATMESSAGE_SIZE );
   row->dateTime = time( NULL );
 
   if( chatHistory_.size() > HISTORY_SIZE )
@@ -490,7 +494,7 @@ void Client::run()
       {
         if( connection_->hasFileTransfer() )
         {
-          gotStatusMessage( "A file transfer is already in progress." );
+          gotStatusMessage( "A file transfer for \"%s\" is already in progress.", connection_->fileTransferName() );
           break;
         }
 

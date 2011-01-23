@@ -81,7 +81,7 @@ void SessionServer::availableMessages()
             }
 
             hasFileTransferStarted_ = true; // let cycle() go
-            client_->gotStatusMessage( "Started to transfer the file." );
+            client_->gotStatusMessage( "The transfer of \"%s\" has started.", fileName_ );
             break;
 
           case Errors::Status_RejectFileTransfer:
@@ -158,8 +158,8 @@ void SessionServer::availableMessages()
 
         if( dataMessage->isLastBlock() )
         {
+          client_->gotStatusMessage( "The file \"%s\" was received.", fileName_ );
           disableFileTransferMode();
-          client_->gotStatusMessage( "Received the file." );
         }
         break;
       }
@@ -196,9 +196,8 @@ void SessionServer::cycle()
     {
       // Opening the file failed somehow
       Common::error( "Couldn't open %s: %s", fileName_, strerror( errno ) );
-      char message[ MAX_CHATMESSAGE_SIZE ];
-      sprintf( message, "Unable to open file %s! %s", fileName_, strerror( errno ) );
-      client_->gotStatusMessage( message );
+
+      client_->gotStatusMessage( "Unable to open file %s! %s", fileName_, strerror( errno ) );
       disableFileTransferMode();
       return;
     }
@@ -225,7 +224,7 @@ void SessionServer::cycle()
     if( read == 0 && feof( fileTransferHandle_ ) != 0 )
     {
       Common::debug( "End of file reached." );
-      client_->gotStatusMessage( "The file was sent." );
+      client_->gotStatusMessage( "The file has been sent." );
       endOfFile = true;
       break;
     }

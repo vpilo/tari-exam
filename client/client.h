@@ -49,7 +49,7 @@ class Client
     void gotChatMessage( const char* sender, const char* message );
     bool gotFileTransferRequest( const char* sender, const char* filename, char* targetFileName );
     void gotNicknameChange( const char* nickName );
-    void gotStatusMessage( const char* message );
+    void gotStatusMessage( const char* format, ... );
     void run();
     void sendChatMessage( const char* message );
 
