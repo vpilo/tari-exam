@@ -131,14 +131,15 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
 {
   Common::debug( "Asking question: \"%s\"", question );
 
-  mvaddstr( maxY_, 0, question );
 
-  int pos = 0;
+  int pos = strlen( answer );
   bool done = false;
   const int cursorPos = strlen( question ) + 1; // Add a space after the question
 
   while( ! done )
   {
+    mvaddstr( maxY_, 0, question );
+    mvaddstr( maxY_, cursorPos, answer );
     wmove( stdscr, maxY_, pos + cursorPos );
     clrtoeol();
     refresh();
@@ -147,9 +148,8 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
     int ch = getch();
 
     // No characters have been typed
-    if( ch < 0 )
+    if( ch <= 0 )
     {
-      Common::debug( "Got invalid char '%d'", ch );
       continue;
     }
 
@@ -177,7 +177,15 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
         break;
 
       case KEYCODE_BACKSPACE:
-        mvaddch( maxY_, --pos, ' ' );
+        if( pos == 0 )
+        {
+          break;
+        }
+
+        --pos;
+        mvaddch( maxY_, pos, ' ' );
+        answer[ pos ] = '\0';
+        move( maxY_, pos );
         break;
 
       default:
@@ -285,7 +293,8 @@ void Client::gotFileTransferRequest( const char* sender, const char* filename )
 
   bool accept = false;
   bool answered = false;
-  char acceptStr[5];
+  char acceptStr[3];
+  strcpy( acceptStr, "y" );
 
   while( ! answered )
   {
@@ -416,6 +425,12 @@ void Client::run()
       pthread_mutex_unlock( &inputMutex_ );
     }
 
+    // No characters have been typed
+    if( ch <= 0 )
+    {
+      continue;
+    }
+
     // Debugging print of the keypress
     char str[ 32 ];
     sprintf(str, "Keypress %i, '%c'", ch, isprint( ch ) ? ch : '?' );
@@ -423,13 +438,6 @@ void Client::run()
 
     move( maxY_, currentMessagePos_ );
     refresh();
-
-    // No characters have been typed
-    if( ch < 0 )
-    {
-      Common::debug( "Got invalid char '%d'", ch );
-      continue;
-    }
 
     // If we've been disconnected, the pointer will be null
     if( ! connection_ )
@@ -453,6 +461,7 @@ void Client::run()
         Common::debug( "Changing name..." );
 
         char newName[ MAX_NICKNAME_SIZE ];
+        strcpy( newName, connection_->nickName() );
 
         if( askQuestion( "Insert a new nickname:", newName, MAX_NICKNAME_SIZE ) && strlen( newName ) >= 1 )
         {
@@ -472,6 +481,7 @@ void Client::run()
         Common::debug( "Sending file..." );
 
         char fileName[ MAX_PATH_SIZE ];
+        memset( fileName, '\0', MAX_PATH_SIZE );
 
         if( askQuestion( "Choose a file name:", fileName, MAX_PATH_SIZE ) && strlen( fileName ) >= 1 )
         {
