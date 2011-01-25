@@ -1,0 +1,30 @@
+
+About LAN Messenger:
+============
+
+This software is a very basic instant messaging application, meant to be ran
+between machines connected to a LAN.
+
+
+Compiling and installing:
+=================
+
+Just use make:
+
+$ mkdir build
+$ make
+
+There is no make install target atm.
+
+
+Licensing
+=========
+
+The software is released under the GPL 2+ license. See COPYING for the full
+license text.
+
+
+More Information
+================
+
+Contact me at valerio *AT* kmess *DOT* org

@@ -1,6 +1,6 @@
 #
 # LAN Messenger
-# Copyright © 2011 Valerio Pilo
+# Copyright (C) 2011 Valerio Pilo
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,34 +12,33 @@
 DEBUG = -O0 -g3 -fno-inline -Wall -Woverloaded-virtual -Wsign-compare -Wundef
 
 # Uncomment to enable raw packet dumps of data in the respective program
-# SERVER_DEFINES = -DNETWORK_DEBUG
-# CLIENT_DEFINES = -DNETWORK_DEBUG
+SERVER_DEFINES = -DNETWORK_DEBUG
+CLIENT_DEFINES = -DNETWORK_DEBUG
 
 # Uncomment to completely disable debug output
-SERVER_DEFINES += -DNODEBUG
-CLIENT_DEFINES += -DNODEBUG
+# SERVER_DEFINES += -DNODEBUG
+# CLIENT_DEFINES += -DNODEBUG
 
 # Where to find includes
-INCLUDEDIRS= -I common/ -I common/messages/ -I client/ -I server/ -Lbuild/
+INCLUDEDIRS= -I src/common/ -I src/common/messages/ -I src/client/ -I src/server/ -Lbuild/
 
 # Common code source & header files
-GENERIC_SOURCES = common/*.cpp common/messages/*.cpp
-GENERIC_HEADERS = common/*.h   common/messages/*.h
+GENERIC_SOURCES = src/common/*.cpp src/common/messages/*.cpp
+GENERIC_HEADERS = src/common/*.h   src/common/messages/*.h
 
 # Server files
-SERVER_SOURCES = server/*.cpp
-SERVER_HEADERS = server/*.h
+SERVER_SOURCES = src/server/*.cpp
+SERVER_HEADERS = src/server/*.h
 
 # Client files
-CLIENT_SOURCES = client/*.cpp
-CLIENT_HEADERS = client/*.h
+CLIENT_SOURCES = src/client/*.cpp
+CLIENT_HEADERS = src/client/*.h
 
 # Libraries to link in the binaries
 LIBRARIES = -lncurses -lpthread
 
 # Default target: compiles the executable files
 all: $(GENERIC_SOURCES) $(GENERIC_HEADERS) client server
-	@rm -f *.log
 	@echo "Done!"
 
 # Clean up all temporary and debug files and all executables, to force the compiler to rebuild the project from scratch
