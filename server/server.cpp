@@ -261,6 +261,12 @@ void Server::clientSentFileData( SessionClient* client, const FileDataMessage* m
       continue;
     }
 
+    // Don't send the message to a client who refused the file transfer
+    if( peer->fileTransferAccepted() != Errors::Status_AcceptFileTransfer )
+    {
+      continue;
+    }
+
     FileDataMessage* dataMessage = new FileDataMessage();
     dataMessage->setBuffer( message->buffer(), message->bufferSize() );
     dataMessage->setFileOffset( message->fileOffset() );

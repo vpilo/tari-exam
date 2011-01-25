@@ -250,7 +250,6 @@ void SessionServer::cycle()
 
 void SessionServer::disableFileTransferMode()
 {
-
   // Reset the state variables
 
   if( fileTransferHandle_ != NULL )
