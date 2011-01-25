@@ -12,12 +12,12 @@
 DEBUG = -O0 -g3 -fno-inline -Wall -Woverloaded-virtual -Wsign-compare -Wundef
 
 # Uncomment to enable raw packet dumps of data in the respective program
-SERVER_DEFINES = -DNETWORK_DEBUG
-CLIENT_DEFINES = -DNETWORK_DEBUG
+# SERVER_DEFINES = -DNETWORK_DEBUG
+# CLIENT_DEFINES = -DNETWORK_DEBUG
 
 # Uncomment to completely disable debug output
-# SERVER_DEFINES += -DNODEBUG
-# CLIENT_DEFINES += -DNODEBUG
+SERVER_DEFINES += -DNODEBUG
+CLIENT_DEFINES += -DNODEBUG
 
 # Where to find includes
 INCLUDEDIRS= -I common/ -I common/messages/ -I client/ -I server/ -Lbuild/
