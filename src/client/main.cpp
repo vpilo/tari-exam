@@ -24,7 +24,7 @@
 void usage( const char* programName )
 {
   fprintf( stderr, "Usage: %s [address]\n",programName );
-      fprintf( stderr, "If the [address] argument is omitted, the client will try to connect to %s.\n", DEFAULT_SERVER_IP );
+  fprintf( stderr, "If the [address] argument is omitted, the client will try to connect to %s.\n", DEFAULT_SERVER_IP );
 }
 
 
@@ -34,9 +34,9 @@ void usage( const char* programName )
  */
 int main( int argc, char* argv[] )
 {
-  char pid[ 16 ];
-  sprintf( pid, "lanmessenger-client.%d.log", getpid() );
-  Common::setLogFile( pid );
+  char logFile[ MAX_PATH_SIZE ];
+  sprintf( logFile, "lanmessenger-client.%d.log", getpid() );
+  Common::setLogFile( logFile );
   Common::debug( "LAN Messenger client" );
 
   // Check command-line arguments:
@@ -44,7 +44,7 @@ int main( int argc, char* argv[] )
   in_addr serverIp;
   serverIp.s_addr = htonl( INADDR_LOOPBACK );
 
-  char* serverIpString = argv[ 1 ];
+  const char* serverIpString = argv[ 1 ];
   if( argc == 2 )
   {
     if( strcmp( serverIpString, "-h" ) == 0 )
@@ -62,16 +62,19 @@ int main( int argc, char* argv[] )
     }
     serverIp = *( reinterpret_cast<in_addr*>( host->h_addr ) );
   }
+  else
+  {
+    serverIpString = DEFAULT_SERVER_IP;
+  }
 
   Client* client = new Client();
 
   Errors::ErrorCode status = client->initialize( serverIp, SERVER_PORT );
   if( status != Errors::Error_None )
   {
-    Common::error( "Client could not be started: error %d", status );
-    delete client;
+    fprintf( stderr, "Unable to connect to the server at %s: error %d\n", serverIpString, status );
 
-    fprintf( stderr, "Unable to connect to the server at %s\n", serverIpString );
+    delete client;
     return status;
   }
 

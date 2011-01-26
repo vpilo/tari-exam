@@ -70,7 +70,7 @@ Client::Client()
 , currentMessagePos_( 0 )
 , maxX_( 0 )
 , maxY_( 0 )
-, socket_( 0 )
+, socket_( -1 )
 {
   int result = pthread_mutex_init( &inputMutex_, NULL );
   if( result != 0 )
@@ -115,7 +115,10 @@ Client::~Client()
     delete connection_;
   }
 
-  close( socket_ );
+  if( socket_ != -1 )
+  {
+    close( socket_ );
+  }
 
   std::deque<Row*>::iterator it;
   for( it = chatHistory_.begin(); it != chatHistory_.end(); it++ )
@@ -384,7 +387,7 @@ void Client::gotStatusMessage( const char* format, ... )
 
 
 
-Errors::ErrorCode Client::initialize( const in_addr serverIp, const int serverPort )
+Errors::ErrorCode Client::initialize( const in_addr& serverIp, const int serverPort )
 {
   changeStatusMessage( "Connecting...", true );
 
@@ -399,7 +402,7 @@ Errors::ErrorCode Client::initialize( const in_addr serverIp, const int serverPo
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_addr = serverIp;
   serverAddress.sin_port = htons( serverPort );
-  memset( &(serverAddress.sin_zero), '\0', 8 );
+  memset( &(serverAddress.sin_zero), '\0', sizeof( serverAddress.sin_zero ) );
 
   Common::debug( "Connecting to %s:%d...", inet_ntoa( serverIp ), serverPort );
 

@@ -40,7 +40,7 @@ class Client
     Client();
     ~Client();
 
-    Errors::ErrorCode initialize( const in_addr serverIp, const int serverPort );
+    Errors::ErrorCode initialize( const in_addr& serverIp, const int serverPort );
 
     bool askQuestion( const char* question, char* answer, const int answerSize );
     void changeStatusMessage( const char* message = NULL, bool permanent = false );

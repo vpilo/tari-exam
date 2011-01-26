@@ -40,7 +40,7 @@ void Common::debug( const char* debugString, ... )
   vsprintf( outputString, debugString, args );
   va_end( args );
 
-  writeLine( "", outputString );
+  writeLine( NULL, outputString );
 }
 
 
@@ -159,7 +159,7 @@ void Common::printData( const char* buffer, int bufferSize, bool isIncoming, con
 void Common::setLogFile( const char* logFilePath )
 {
    // If a non null and non empty string was given, use the logfile (good for threads)
-  useLogFile_ = ( logFilePath != 0 && *logFilePath != '\0' );
+  useLogFile_ = ( logFilePath != NULL && strlen( logFilePath ) > 0 );
 
   strncpy( logFilePath_, logFilePath, MAX_STRING_LENGTH - 1 );
   logFilePath_[ MAX_STRING_LENGTH - 1 ] = '\0';  // Ensure the last byte is a null
@@ -182,7 +182,15 @@ void Common::writeLine( const char* prefix, const char* string )
 
   // Compose the debug line, adding the elapsed time (very useful when multithreading)
   char line[ MAX_STRING_LENGTH ];
-  sprintf( line, "%7.3f> %s%s\n", elapsed, prefix, string );
+
+  if( prefix == NULL )
+  {
+    sprintf( line, "%7.3f> %s\n", elapsed, string );
+  }
+  else
+  {
+    sprintf( line, "%7.3f> %s%s\n", elapsed, prefix, string );
+  }
 
   writeRawData( line );
 }
@@ -200,7 +208,7 @@ void Common::writeRawData( const char* data )
   // ..or to file
 
   // Open the file
-  if( logFileHandle_ == 0 )
+  if( logFileHandle_ == NULL )
   {
     logFileHandle_ = fopen( logFilePath_, "w" );
 
