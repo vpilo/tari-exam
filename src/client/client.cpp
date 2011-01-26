@@ -140,6 +140,7 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
   {
     mvaddstr( maxY_, 0, question );
     mvaddstr( maxY_, cursorPos, answer );
+    mvaddch( maxY_, cursorPos - 1, ' ' );
     wmove( stdscr, maxY_, pos + cursorPos );
     clrtoeol();
     refresh();
@@ -148,7 +149,7 @@ bool Client::askQuestion( const char* question, char* answer, const int answerSi
     int ch = getch();
 
     // No characters have been typed
-    if( ch <= 0 )
+    if( ch <= 1 )
     {
       continue;
     }
@@ -284,7 +285,7 @@ bool Client::gotFileTransferRequest( const char* sender, const char* filename, c
 {
   // Make the run() loop to block while we're asking the user to accept or reject
   pthread_mutex_lock( &inputMutex_ );
-  ungetch( 0 ); // force the run() loop to get to the lock
+  ungetch( 1 ); // force the run() loop to get to the lock
 
   char string[ MAX_CHATMESSAGE_SIZE ];
   gotStatusMessage( "Received a request to transfer \"%s\" from \"%s\"", filename, sender );
@@ -446,7 +447,7 @@ void Client::run()
     }
 
     // No characters have been typed
-    if( ch <= 0 )
+    if( ch <= 1 )
     {
       continue;
     }

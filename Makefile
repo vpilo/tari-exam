@@ -20,7 +20,7 @@ CLIENT_DEFINES = -DNETWORK_DEBUG
 # CLIENT_DEFINES += -DNODEBUG
 
 # Where to find includes
-INCLUDEDIRS= -I src/common/ -I src/common/messages/ -I src/client/ -I src/server/ -Lbuild/
+INCLUDEDIRS= -I src/common/ -I src/common/messages/ -I src/client/ -I src/server/
 
 # Common code source & header files
 GENERIC_SOURCES = src/common/*.cpp src/common/messages/*.cpp
@@ -39,6 +39,7 @@ LIBRARIES = -lncurses -lpthread
 
 # Default target: compiles the executable files
 all: $(GENERIC_SOURCES) $(GENERIC_HEADERS) client server
+	@rm -f *.log
 	@echo "Done!"
 
 # Clean up all temporary and debug files and all executables, to force the compiler to rebuild the project from scratch
