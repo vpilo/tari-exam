@@ -25,6 +25,7 @@ class SessionBase
     virtual ~SessionBase();
 
     virtual void disconnect();
+    bool isConnected() const;
 
     /**
      * Send a message.

@@ -32,6 +32,8 @@ class SessionClient : public SessionBase
     SessionClient( Server* parent, const int socket );
     virtual ~SessionClient();
 
+    virtual void disconnect();
+
     Errors::StatusCode fileTransferAccepted() const;
 
     const char* nickName() const;

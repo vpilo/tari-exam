@@ -67,6 +67,13 @@ void SessionBase::disconnect()
 
 
 
+bool SessionBase::isConnected() const
+{
+  return ( ! disconnectionFlag_ );
+}
+
+
+
 Message* SessionBase::parseMessage()
 {
   // Current position in the first message contained in the buffer

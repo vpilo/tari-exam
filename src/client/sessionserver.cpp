@@ -269,8 +269,11 @@ void SessionServer::disableFileTransferMode()
 
 void SessionServer::disconnect()
 {
-  sendMessage( new ByeMessage() );
-  SessionBase::disconnect();
+  if( isConnected() )
+  {
+    sendMessage( new ByeMessage() );
+    SessionBase::disconnect();
+  }
 }
 
 

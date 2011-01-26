@@ -14,6 +14,7 @@
 #include "message.h"
 #include "server.h"
 
+#include "byemessage.h"
 #include "chatmessage.h"
 #include "filedatamessage.h"
 #include "filetransfermessage.h"
@@ -156,6 +157,17 @@ void SessionClient::availableMessages()
     }
 
     delete message;
+  }
+}
+
+
+
+void SessionClient::disconnect()
+{
+  if( isConnected() )
+  {
+    sendMessage( new ByeMessage() );
+    SessionBase::disconnect();
   }
 }
 
