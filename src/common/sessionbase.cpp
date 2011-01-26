@@ -101,7 +101,7 @@ Message* SessionBase::parseMessage()
     return new Message();
   }
   // Payload size upper limit
-  if( abs( messageHeader.size ) > MAX_PAYLOAD_SIZE )
+  if( messageHeader.size > (int)MAX_PAYLOAD_SIZE )
   {
     Common::error( "Received invalid message payload size %d, it should have been at most %d!", messageHeader.size, MAX_PAYLOAD_SIZE );
     return new Message();

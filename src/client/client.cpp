@@ -70,6 +70,7 @@ Client::Client()
 , currentMessagePos_( 0 )
 , maxX_( 0 )
 , maxY_( 0 )
+, socket_( 0 )
 {
   int result = pthread_mutex_init( &inputMutex_, NULL );
   if( result != 0 )

@@ -193,7 +193,7 @@ void Common::writeRawData( const char* data )
   // Write it to standard output..
   if( ! useLogFile_ )
   {
-    printf( data );
+    printf( "%s", data );
     return;
   }
 
