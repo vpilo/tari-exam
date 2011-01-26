@@ -69,10 +69,15 @@ void SessionBase::disconnect()
 
 Message* SessionBase::parseMessage()
 {
+  // Current position in the first message contained in the buffer
+  int messageOffset_ = 0;
+
   int messageHeaderSize = sizeof( MessageHeader );
 
   MessageHeader messageHeader;
   memcpy( &messageHeader, buffer_, messageHeaderSize );
+
+  messageOffset_ += messageHeaderSize;
 
   // Identify the command
   Message::Type type = Message::MSG_INVALID;
@@ -86,15 +91,26 @@ Message* SessionBase::parseMessage()
     }
   }
 
+
   // Validate the header fields
+
+  // Command
   if( type == Message::MSG_INVALID )
   {
     Common::error( "Received invalid command \"%s\"!", messageHeader.command );
-    return NULL;
+    return new Message();
   }
-  if( ( messageHeaderSize + messageHeader.size ) > MAX_MESSAGE_SIZE )
+  // Payload size upper limit
+  if( abs( messageHeader.size ) > MAX_PAYLOAD_SIZE )
   {
-    Common::error( "Received invalid message data size \"%d\"!", messageHeader.size );
+    Common::error( "Received invalid message payload size %d, it should have been at most %d!", messageHeader.size, MAX_PAYLOAD_SIZE );
+    return new Message();
+  }
+  // A more precise check: if the message should contain X bytes but we have a X-n buffer,
+  // posticipate the parsing
+  if( ( bufferOffset_ - messageHeaderSize ) < messageHeader.size )
+  {
+    Common::debug( "Not enough payload data has arrived yet, waiting for more..." );
     return NULL;
   }
 
@@ -105,7 +121,6 @@ Message* SessionBase::parseMessage()
 
   switch( type )
   {
-    // Simple messages don't need a specialized class
     case Message::MSG_HELLO:
       message = new HelloMessage();
       break;
@@ -129,12 +144,7 @@ Message* SessionBase::parseMessage()
       break;
     default:
       Common::error( "Could not create the message. Invalid type %d", type );
-      break;
-  }
-
-  if( message == NULL )
-  {
-    return NULL;
+      return new Message();
   }
 
   bool isOk = message->fromRawBytes( dataBuffer, messageHeader.size );
@@ -147,13 +157,16 @@ Message* SessionBase::parseMessage()
   // Message is OK, move the rest of the buffer data at the start of the buffer
   // so the next one can be read
 
-  bufferOffset_ += messageHeader.size;
-  int remainder = MAX_MESSAGE_SIZE - bufferOffset_;
-  memcpy( buffer_, buffer_ + bufferOffset_, remainder );
-  bufferOffset_ = 0;
+  messageOffset_ += message->size();
 
-  // and zero out the remainder
-  memset( buffer_ + MAX_MESSAGE_SIZE - remainder, '\0', remainder );
+  int remainder = MAX_MESSAGE_SIZE - messageOffset_;
+  char* remainderBuffer = static_cast<char*>( malloc( remainder ) );
+  memcpy( remainderBuffer, buffer_ + messageOffset_, remainder );
+
+  // Also zero it out so it's clearer where messages end
+  memset( buffer_, '\0', MAX_MESSAGE_SIZE );
+  memcpy( buffer_, remainderBuffer, remainder );
+  bufferOffset_ -= messageOffset_;
 
   return message;
 }
@@ -271,40 +284,46 @@ bool SessionBase::readData()
 
   if( readBytes == 0 )
   {
-    Common::debug( "Session 0x%X: Socket was closed", this );
+    Common::debug( "Session 0x%X: Nothing was read. Socket closed?", this );
     return true;
   }
   else if( readBytes < 0 )
   {
-    Common::error( "Session 0x%X: error: Socket is closed", this );
+    Common::error( "Session 0x%X: Socket was closed!", this );
     return true;
   }
 
+  bufferOffset_ += readBytes;
+
   // Received data is shorter than the minimum message size, cannot be a valid message
   int messageHeaderSize = sizeof( MessageHeader );
-  if( ( bufferOffset_ + readBytes ) < messageHeaderSize )
+  if( bufferOffset_ < messageHeaderSize )
   {
-    Common::debug( "Not enough data yet. Minimum size is %d bytes, received only %d", messageHeaderSize, bufferOffset_ );
+    Common::debug( "Not enough data yet. Got %d out of %d minimum.", bufferOffset_, messageHeaderSize );
     return false;
   }
 
 #ifdef NETWORK_DEBUG
-  Common::printData( buffer_, bufferOffset_ + readBytes, true, "Incoming message" );
+  Common::printData( buffer_, bufferOffset_, true, "Incoming data" );
 #endif
 
   Message* message = parseMessage();
 
-  if( message != NULL && message->type() != Message::MSG_INVALID )
+  // There is not enough data yet for this kind of message
+  if( message == NULL )
   {
-    receivingQueue_.push_back( message );
-    availableMessages();
+    return false;
   }
-  else
+
+  // The returned message isn't valid, something bad happened
+  if( message->type() == Message::MSG_INVALID )
   {
-    // Invalid message
     delete message;
     return true;
   }
+
+  receivingQueue_.push_back( message );
+  availableMessages();
 
   return false;
 }
@@ -342,7 +361,7 @@ bool SessionBase::sendMessage( Message* message )
 
 bool SessionBase::writeData()
 {
-  Common::debug( "Session 0x%X: Sending queued data...", this );
+//   Common::debug( "Session 0x%X: Sending queued data...", this );
 
   if( sendingQueue_.size() == 0 )
   {
@@ -378,6 +397,7 @@ bool SessionBase::writeData()
 #ifdef NETWORK_DEBUG
   Common::printData( sendBuffer, sendBufferSize, false, "Sent message" );
 #endif
+
   send( socket_, sendBuffer, sendBufferSize, 0 );
 
   free( sendBuffer );

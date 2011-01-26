@@ -212,7 +212,7 @@ void SessionServer::cycle()
   FileDataMessage* message = new FileDataMessage();
 
 
-  const int maxPayloadSize = MAX_MESSAGE_SIZE - message->size();
+  const int maxPayloadSize = MAX_PAYLOAD_SIZE - message->size();
 
   int offset;
   bool endOfFile = false;
@@ -230,7 +230,7 @@ void SessionServer::cycle()
     }
   }
 
-  Common::debug( "File: Read %d chars from offset %lu, last? %s", offset, fileTransferOffset_, endOfFile?"yes":"no" );
+//   Common::debug( "File: Read %d (max %d) chars from offset %lu, last? %s", offset, maxPayloadSize, fileTransferOffset_, endOfFile?"yes":"no" );
 
   message->setBuffer( fileTransferBuffer_, offset );
   message->setFileOffset( fileTransferOffset_ );

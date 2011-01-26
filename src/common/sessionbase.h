@@ -72,7 +72,9 @@ class SessionBase
      * Identifies a received message within the data buffer.
      *
      * @return
-     *  An instance of the proper Message subclass; or NULL in case of an error
+     *  NULL if no messages are available yet;
+     *  an instance of the proper Message subclass if a good message is found;
+     *  an instance of an invalid Message in case of error
      */
     Message* parseMessage();
 
@@ -93,6 +95,7 @@ class SessionBase
 
     char* buffer_;
 
+    /// Total amount of unread bytes in the buffer
     int bufferOffset_;
 
     bool disconnectionFlag_;

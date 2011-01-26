@@ -27,14 +27,6 @@
 
 
 /**
- * @def MAX_MESSAGE_SIZE
- *
- * A packet containing a message can be long at most this long.
- */
-#define MAX_MESSAGE_SIZE   65495
-
-
-/**
  * @def MAX_PATH_SIZE
  *
  * Maximum length of a filename path in bytes.
@@ -76,6 +68,22 @@ struct MessageHeader
   char command[ COMMAND_SIZE ];
   int size;
 };
+
+
+/**
+ * @def MAX_MESSAGE_SIZE
+ *
+ * A TCP packet containing a message can be long at most this long.
+ */
+#define MAX_MESSAGE_SIZE   1448
+
+
+/**
+ * @def MAX_PAYLOAD_SIZE
+ *
+ * A packet containing a message can be long at most this long.
+ */
+#define MAX_PAYLOAD_SIZE   ( MAX_MESSAGE_SIZE - sizeof( MessageHeader ) )
 
 
 
