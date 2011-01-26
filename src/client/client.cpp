@@ -516,13 +516,13 @@ void Client::run()
 
       case KEYCODE_ENTER:
         Common::debug( "Enter pressed" );
-        if( currentMessagePos_ == 0 )
+        if( currentMessagePos_ <= 0 )
         {
           break;
         }
 
-        Common::debug( "Sending message: %s (%d bytes)", currentMessage_, currentMessagePos_ );
         currentMessage_[ currentMessagePos_ ] = '\0';
+        Common::debug( "Sending message: %s (%d bytes)", currentMessage_, currentMessagePos_ );
         sendChatMessage( currentMessage_ );
 
         currentMessagePos_ = 0;
@@ -531,7 +531,7 @@ void Client::run()
         break;
 
       case KEYCODE_BACKSPACE:
-        if( currentMessagePos_ == 0 )
+        if( currentMessagePos_ <= 0 )
         {
           break;
         }
@@ -646,7 +646,7 @@ void Client::updateView()
   {
     Row* row = (*it);
 
-    struct tm* timeinfo = localtime ( &( row->dateTime ) );
+    struct tm* timeinfo = localtime( &( row->dateTime ) );
 
     char dateTime[ 16 ];
     strftime( dateTime, 16, "%H.%M", timeinfo );

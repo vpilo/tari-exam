@@ -122,7 +122,6 @@ Message* SessionBase::parseMessage()
   }
 
   // Make the message and pass to it only the message-specific data
-  char* dataBuffer = buffer_ + messageHeaderSize;
 
   Message* message = NULL;
 
@@ -154,7 +153,10 @@ Message* SessionBase::parseMessage()
       return new Message();
   }
 
-  bool isOk = message->fromRawBytes( dataBuffer, messageHeader.size );
+  // Position in the buffer where the first payload byte is located
+  char* payloadBuffer = buffer_ + messageHeaderSize;
+
+  bool isOk = message->fromRawBytes( payloadBuffer, messageHeader.size );
   if( ! isOk )
   {
     delete message;
@@ -174,6 +176,8 @@ Message* SessionBase::parseMessage()
   memset( buffer_, '\0', MAX_MESSAGE_SIZE );
   memcpy( buffer_, remainderBuffer, remainder );
   bufferOffset_ -= messageOffset_;
+
+  free( remainderBuffer );
 
   return message;
 }
@@ -197,7 +201,9 @@ void* SessionBase::pollForData( void* thisPointer )
 
   // ..or a signal is caught
   sigset_t set;
-  pthread_sigmask( SIG_SETMASK, &set, NULL );
+  sigemptyset( &set );
+  pthread_sigmask( SIG_BLOCK, NULL, &set );
+
 
   bool hasError = false;
 

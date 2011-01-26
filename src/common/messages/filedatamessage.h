@@ -14,6 +14,8 @@
 #include "message.h"
 #include "protocol.h"
 
+#include <stdint.h>
+
 
 
 class FileDataMessage : public Message
@@ -58,7 +60,7 @@ class FileDataMessage : public Message
 
     struct Payload
     {
-      long offset;
+      int64_t offset;
       bool isLast;
       int size;
       char* data;
