@@ -4,5 +4,5 @@
 # Built binaries and intermediate files
 build
 
-# Reference code
-old
+# Log files
+*.log
