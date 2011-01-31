@@ -39,6 +39,7 @@ LIBRARIES = -lncurses -lpthread
 
 # Default target: compiles the executable files
 all: $(GENERIC_SOURCES) $(GENERIC_HEADERS) client server
+	@mkdir -p build
 	@rm -f *.log
 	@echo "Done!"
 
